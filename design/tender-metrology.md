@@ -1,0 +1,15 @@
+# Tender Metrology
+
+**Measure with the care you'd use to hold something.**
+
+Tender Metrology is the visual language of a careful observer. It treats the soft and unstable things in life (an unsteady hand, a tired joint, a grip that wants to slip) with the exactness usually reserved for instruments and observatories. Every composition is part calibration sheet, part embrace. The precision is never cold. It is a way of paying attention, and attention is a form of care. Each piece should feel meticulously crafted, as if someone spent many patient evenings tuning a single curve until it sat exactly where a fingertip would rest.
+
+Form is built from the capsule: a rectangle whose ends have become perfect semicircles. A capsule is a bone with its edges forgiven. Capsules stack, nest and lean on each other to make bodies, supports and pathways. Around them sit the instruments of measurement: hairline contour rings that spread out like ripples, dimension ticks, dotted guide grids, small crosshairs marking where something was understood. Nothing is sharp that could be round. Nothing is round by accident. Each radius is decided, and each stroke weight is consistent across the series, the result of painstaking calibration.
+
+Color is quiet and has a job to do. The ground is paper-white or a single pastel field: blush, lavender, mint, ice. These fields hold a subject the way a palm holds an object. One saturated blue appears on every sheet, and only where a decision was made: the point of contact, the corrected line, the place where support begins. Ink is a warm near-black, used at hairline weight for measuring and at full weight only for the subject. The palette never grows. Any piece should be recognisable from across a room by its restraint alone.
+
+Composition is generous and off-centre. Subjects sit low and to one side, so the empty space reads as room to breathe. Repetition does the explaining: a row of trembling marks that settles into a single straight one, a field of identical rings in which one is held, a sequence of stations in which the same capsule passes from one form to the next. Rhythm takes the place of narrative. The eye should be rewarded for staying, finding the second grid behind the first and the tick that lines up with an edge three elements away. That reward is the mark of master-level execution.
+
+Text is a whisper in the margin, like the annotations on a field notebook or a technical drawing. A small monospaced label, a coordinate, a single word set thin and far from everything else. It is never a sentence that explains. It names, the way a scientist names a specimen, and then steps back. All type lives inside generous margins and never touches a form. It is placed with the same deliberate hand as every ring and every dot.
+
+The finished sheets should look like plates from a beautifully produced atlas of an imaginary science: one that studies how people hold the world and how the world could be shaped to hold them back. Every element should be refined repeatedly until nothing can be removed. It is the product of deep expertise and unhurried care.

@@ -31,7 +31,7 @@ function Shell({ eyebrow, title, intro, children, toc }) {
 const S = ({ id, t, children }) => <section id={id}><h2>{t}</h2>{children}</section>;
 
 export function Terms() {
-  const toc = [['quem', 'Quem vende'], ['produtos', 'Produtos e preços'], ['encomenda', 'Encomenda e pagamento'], ['producao', 'Produção e entrega'], ['resolucao', 'Livre resolução'], ['garantia', 'Garantia'], ['comunidade', 'Designs da comunidade'], ['litigios', 'Reclamações e litígios']];
+  const toc = [['quem', 'Quem vende'], ['produtos', 'Produtos e preços'], ['especial', 'Pedidos especiais'], ['encomenda', 'Encomenda e pagamento'], ['producao', 'Produção e entrega'], ['resolucao', 'Livre resolução'], ['garantia', 'Garantia'], ['comunidade', 'Designs da comunidade'], ['litigios', 'Reclamações e litígios']];
   return (
     <Shell eyebrow={`Em vigor desde ${TERMS_DATE_PT}`} title="Termos de venda" intro="O que acontece quando compras na DÍGITO, em linguagem simples. Ao pagar uma encomenda aceitas estes termos." toc={toc}>
       <S id="quem" t="Quem vende">
@@ -46,6 +46,10 @@ export function Terms() {
         </ul>
         <p>Os preços estão em euros e incluem todos os impostos aplicáveis. O custo de envio aparece no carrinho antes de pagares. O preço que conta é o que é confirmado no nosso servidor no momento do pagamento.</p>
         <p>As peças são impressas em 3D. Pequenas linhas de camada, variações de cor entre lotes e tolerâncias de ±0,2 mm são próprias do processo e não são defeitos.</p>
+      </S>
+      <S id="especial" t="Pedidos especiais (feito contigo)">
+        <p>Quando pedes uma peça fora do configurador, estudamos o teu caso e enviamos um orçamento com preço, prazo e descrição da peça. Nada é fabricado nem cobrado antes de aceitares. Se for preciso, imprimimos primeiro uma peça de teste, e o orçamento diz se essa peça tem custo.</p>
+        <p>Peças de pedidos especiais são produtos à medida, por isso não têm direito de livre resolução, mas mantêm a garantia legal. São acessórios de conforto e não dispositivos médicos.</p>
       </S>
       <S id="encomenda" t="Encomenda e pagamento">
         <p>Para encomendar precisas de uma conta. O pagamento é feito na página segura da Stripe (cartão, MB WAY e outros métodos que a Stripe apresente). Não vemos nem guardamos os dados do teu cartão.</p>
@@ -75,7 +79,7 @@ export function Terms() {
 }
 
 export function Privacy() {
-  const toc = [['responsavel', 'Responsável'], ['dados', 'Que dados usamos'], ['foto', 'A fotografia da mão'], ['quem', 'Com quem partilhamos'], ['prazos', 'Quanto tempo guardamos'], ['direitos', 'Os teus direitos'], ['local', 'Armazenamento no browser']];
+  const toc = [['responsavel', 'Responsável'], ['dados', 'Que dados usamos'], ['pedidos', 'Pedidos especiais'], ['foto', 'A fotografia da mão'], ['quem', 'Com quem partilhamos'], ['prazos', 'Quanto tempo guardamos'], ['direitos', 'Os teus direitos'], ['local', 'Armazenamento no browser']];
   return (
     <Shell eyebrow={`Atualizada a ${TERMS_DATE_PT}`} title="Privacidade" intro="Usamos o mínimo de dados para fazer a tua capa e entregá-la. Não vendemos dados e não usamos publicidade." toc={toc}>
       <S id="responsavel" t="Responsável pelo tratamento">
@@ -90,9 +94,14 @@ export function Privacy() {
             <tr><td>Larguras dos dedos, altura, mão dominante, telemóvel</td><td>Gerar a geometria da capa e das pegas</td><td>Contrato</td></tr>
             <tr><td>Encomendas, morada de envio, estado do pagamento</td><td>Produzir, entregar e faturar</td><td>Contrato e obrigação legal</td></tr>
             <tr><td>Mensagens enviadas pelo contacto</td><td>Responder-te</td><td>Interesse legítimo</td></tr>
+            <tr><td>Pedidos especiais: nome, contactos, descrição e, se quiseres, situações de saúde</td><td>Estudar e responder ao pedido, desenhar e fabricar a peça</td><td>Diligências pré-contratuais; consentimento explícito para dados de saúde</td></tr>
           </tbody>
         </table>
         <p>As medidas da mão servem apenas para dimensionar peças. Não as usamos para identificar pessoas nem as combinamos com outros dados.</p>
+      </S>
+      <S id="pedidos" t="Pedidos especiais e dados de saúde">
+        <p>No pedido especial podes indicar, se quiseres, situações como tremor, dor ou pouca força. São dados de saúde, por isso só os guardamos com a tua autorização explícita (artigo 9.º, n.º 2, alínea a) do RGPD). Usamo-los apenas para responder ao teu pedido e desenhar a tua peça. Não os partilhamos com ninguém, não os usamos para marketing e não te pedimos diagnósticos nem relatórios médicos.</p>
+        <p>Podes retirar a autorização a qualquer momento através do <Link to="/ajuda?assunto=dados">contacto</Link>. Nesse caso apagamos essa informação. Os pedidos que não resultem em encomenda são apagados 2 anos depois do último contacto.</p>
       </S>
       <S id="foto" t="A fotografia da mão">
         <p>A medição por fotografia corre inteiramente no teu dispositivo. A imagem nunca é enviada para os nossos servidores. Só guardamos os números que resultam dela, e apenas se guardares o design.</p>

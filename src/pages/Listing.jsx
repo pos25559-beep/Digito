@@ -71,7 +71,7 @@ export default function Listing() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill={fav ? '#C98418' : 'none'} stroke={fav ? '#C98418' : 'currentColor'} strokeWidth="2" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>
               </button>
             </div>
-            {['capa', 'kit', 'pega'].includes(l.category) && <p className="hint">Depois da compra pedimos as medidas da tua mão. Se preferires escolher tudo já, <Link to="/configurar">configura à medida</Link>.</p>}
+            {['capa', 'kit', 'pega'].includes(l.category) && <p className="hint">Depois da compra pedimos as medidas da tua mão. Se preferires escolher tudo já, <Link to="/configurar">configura à medida</Link>, ou <Link to="/feito-contigo">fala connosco</Link> se precisas de algo diferente.</p>}
           </Plate>
           <div style={{ whiteSpace: 'pre-line', color: 'var(--ink-2)' }}>{l.description}</div>
           <table className="spec-table"><tbody>

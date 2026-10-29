@@ -21,24 +21,6 @@ function AutoVideo({ src, poster, label }) {
   return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} />;
 }
 
-/* cartão flutuante do herói: as quatro larguras a "medir-se" */
-function MeasureCard() {
-  const F = [['Indicador', 19.4], ['Médio', 20.6], ['Anelar', 19.1], ['Mindinho', 16.2]];
-  const [k, setK] = useState(0);
-  useEffect(() => { const t = setInterval(() => setK(x => (x + 1) % 5), 900); return () => clearInterval(t); }, []);
-  return (
-    <div className="float-card" aria-hidden="true">
-      <div className="fc-row"><span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', color: 'var(--ink)' }}><Icon n="straighten" size={20} style={{ color: 'var(--blue)' }} /> A tua mão</span><span className="hint">{k >= 4 ? 'medida' : 'a medir…'}</span></div>
-      {F.map(([n, w], i) => (
-        <div key={n} style={{ display: 'grid', gap: 4 }}>
-          <div className="fc-row"><span>{n}</span><b>{i < k || k === 4 ? fmt(w, 1) + ' mm' : '—'}</b></div>
-          <div className="fc-bar"><i style={{ width: i < k || k === 4 ? `${(w / 24) * 100}%` : '0%' }} /></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Lab() {
   const cv = useRef(); const view = useRef(); const [w, setW] = useState(19.2); const [style, setStyle] = useState('FULL_4_FINGER'); const [d, setD] = useState({});
   useEffect(() => {
@@ -94,6 +76,11 @@ const MATS = [
   { name: 'Ti6Al4V', proc: 'SLM · edição', dot: 'linear-gradient(135deg,#e4e6e9,#8e9298 45%,#cfd2d6 60%,#7c8086)', E: '110 GPa', rho: '4,43 g/cm³', c: '0,10 mm', note: 'Titânio grau 5, fundido a laser.' }
 ];
 const COLORS = ['c-red', 'c-blue', 'c-violet', 'c-green'];
+const NEEDS = [
+  { img: 'estabilidade', tag: 'Anel', c: 'c-violet', t: 'Quando a mão treme', d: 'O anel prende o telemóvel a um dedo. Se a mão treme ou perde força por um instante, o telemóvel fica onde está.', alt: 'Uma linha que treme passa por um anel azul e sai direita.' },
+  { img: 'apoio', tag: 'Sela', c: 'c-red', t: 'Quando os dedos doem', d: 'Cada sela tem o raio do teu dedo e apoia-o em toda a largura, para segurares sem teres de apertar uma superfície lisa.', alt: 'Um dedo com três falanges apoiado em duas selas azuis.' },
+  { img: 'forca', tag: 'Prateleira', c: 'c-green', t: 'Quando falta força', d: 'O mindinho por baixo funciona como prateleira e sustenta o peso. Os outros dedos só têm de equilibrar.', alt: 'Telemóvel apoiado por baixo numa prateleira azul, o mindinho.' },
+];
 
 export default function Home() {
   const [listings, setListings] = useState([]);
@@ -106,36 +93,55 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <h1>Uma capa feita <em>à medida</em> dos teus dedos</h1>
-          <p>Mede a tua mão com uma fotografia. Geramos uma pega para cada dedo e imprimimos tudo em 3D, só para ti.</p>
+          <span className="why-kicker">Capas à medida para mãos que precisam de mais apoio</span>
+          <h1>Segurar o telemóvel <em>não devia</em> ser difícil</h1>
+          <p>A DÍGITO faz capas com uma pega à medida de cada dedo, pensadas para quem tem tremor, artrose ou pouca força. Configura a tua em minutos, ou fala connosco e fazemo-la contigo.</p>
           <div className="hero-cta">
             <Link to="/configurar" className="key key-dark key-lg">Configurar a minha capa</Link>
-            <Link to="/loja" className="key key-alu key-lg">Ver a loja</Link>
+            <Link to="/feito-contigo" className="key key-alu key-lg">Fazer um pedido especial</Link>
           </div>
         </div>
-        <div className="hero-media">
-          <video src={V('hero.mp4')} poster={V('hero.jpg')} autoPlay muted loop playsInline aria-label="Impressora 3D a depositar, camada a camada, quatro pegas DÍGITO." />
-          <MeasureCard />
+        <div className="hero-media art">
+          <img src={`${BASE}/ilustracoes/hero.webp`} alt="Costas de um telemóvel com quatro dedos apoiados em pegas, cada um com a sua largura medida: 18,4, 19,2, 17,8 e 15,1 milímetros." width="1500" height="1725" />
         </div>
       </section>
 
       <div className="wrap">
         <nav className="chips-bar" aria-label="Secções">
-          <a className="chip-link" href="#medir"><Icon n="photo_camera" />Medir</a>
-          <a className="chip-link" href="#gerar"><Icon n="view_in_ar" />Gerar</a>
-          <a className="chip-link" href="#imprimir"><Icon n="precision_manufacturing" />Imprimir</a>
+          <a className="chip-link" href="#para-quem"><Icon n="back_hand" />Para quem</a>
+          <a className="chip-link" href="#medir"><Icon n="photo_camera" />Como funciona</a>
+          <a className="chip-link" href="#feito-contigo"><Icon n="forum" />Feito contigo</a>
           <a className="chip-link" href="#porque"><Icon n="lightbulb" />Porquê</a>
           <a className="chip-link" href="#laboratorio"><Icon n="3d_rotation" />Experimentar</a>
           <Link className="chip-link" to="/loja"><Icon n="storefront" />Loja</Link>
         </nav>
         <div className="explore"><span>Explorar</span><Icon n="arrow_downward" size={20} /></div>
+      </div>
 
+      <section className="wrap needs" id="para-quem">
+        <div className="band-head reveal"><h2>Pensada para quem o telemóvel escorrega da mão</h2><p>Três situações comuns. Para cada uma, uma pega com uma função diferente. Combinam-se na mesma capa.</p></div>
+        <div className="needs-grid">
+          {NEEDS.map(n => (
+            <article key={n.t} className="need reveal">
+              <img src={`${BASE}/ilustracoes/${n.img}.webp`} alt={n.alt} loading="lazy" width="1800" height="1350" />
+              <div className="need-b">
+                <span className={`need-tag ${n.c}`}>{n.tag}</span>
+                <h3>{n.t}</h3>
+                <p>{n.d}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <p className="needs-note reveal"><Icon n="info" size={18} />As peças DÍGITO são acessórios de conforto. Não são dispositivos médicos nem substituem o acompanhamento de um profissional de saúde.</p>
+      </section>
+
+      <div className="wrap">
         <section className="story reveal" id="medir">
           <div className="story-media"><span className="tagpill"><Icon n="photo_camera" />Medição</span><AutoVideo src={V('measure.mp4')} poster={V('measure.jpg')} label="Mão com os 21 pontos de articulação e réguas de largura em cada dedo." /></div>
           <div className="story-copy">
             <span className="story-step"><span className="num">1</span>Medir</span>
             <h2>Uma fotografia chega para medir cada dedo</h2>
-            <p>Pousa a mão numa folha com um cartão ao lado. A visão por computador encontra as 21 articulações e mede a largura de cada dedo, à décima de milímetro. Tudo corre no teu telemóvel e a foto nunca é enviada.</p>
+            <p>Pousa a mão numa folha com um cartão ao lado. O telemóvel encontra as 21 articulações e mede a largura de cada dedo, à décima de milímetro. A fotografia nunca sai do teu telemóvel.</p>
           </div>
         </section>
 
@@ -144,8 +150,8 @@ export default function Home() {
           <div className="story-copy">
             <span className="story-step"><span className="num">2</span>Gerar</span>
             <h2>Uma pega por dedo, com a forma desse dedo</h2>
-            <p>O berço de cada pega tem o raio do teu dedo. Os encaixes ficam onde os dedos caem quando seguras o telemóvel, e os cantos engrossam conforme a altura de queda que escolhes.</p>
-            <div className="facts"><div className="fact"><b>4</b><span>pegas diferentes</span></div><div className="fact"><b>0,1 mm</b><span>resolução da medida</span></div></div>
+            <p>O berço de cada pega tem o raio do teu dedo. Os encaixes ficam onde os teus dedos caem quando seguras o telemóvel, e os cantos engrossam conforme a altura de queda que escolhes.</p>
+            <div className="facts"><div className="fact"><b>4</b><span>pegas, uma por dedo</span></div><div className="fact"><b>0,1 mm</b><span>resolução da medida</span></div></div>
           </div>
         </section>
 
@@ -153,12 +159,30 @@ export default function Home() {
           <div className="story-media"><span className="tagpill"><Icon n="precision_manufacturing" />Impressão</span><AutoVideo src={V('print.mp4')} poster={V('print.jpg')} label="Impressão FDM da capa, camada a camada." /></div>
           <div className="story-copy">
             <span className="story-step"><span className="num">3</span>Imprimir</span>
-            <h2>Camada a camada, só para ti</h2>
-            <p>A capa é impressa em TPU flexível com alvéolos nas costas. As pegas saem em PETG com fibra de carbono, resina tenaz ou titânio, e encaixam na capa sem ferramentas.</p>
-            <div className="facts"><div className="fact"><b>1</b><span>peça é a série mínima</span></div><div className="fact"><b>0</b><span>moldes</span></div></div>
+            <h2>Impressa em 3D, porque não há duas iguais</h2>
+            <p>Uma peça única não justifica um molde. Por isso a capa é impressa em TPU flexível e as pegas em PETG com fibra de carbono, resina tenaz ou titânio. Encaixam sem ferramentas e trocam-se se a tua mão mudar.</p>
+            <div className="facts"><div className="fact"><b>Desde 1</b><span>peça por encomenda</span></div><div className="fact"><b>Sem</b><span>moldes nem stock</span></div></div>
           </div>
         </section>
       </div>
+
+      <section className="band contigo" id="feito-contigo">
+        <div className="wrap contigo-in">
+          <figure className="contigo-art reveal"><img src={`${BASE}/ilustracoes/contigo.webp`} alt="Quatro etapas: escreves, falamos, medimos, fazemos." loading="lazy" width="1800" height="1350" /></figure>
+          <div className="contigo-copy reveal">
+            <span className="why-kicker">Feito contigo</span>
+            <h2>E se o padrão não servir?</h2>
+            <p>Nem todas as mãos cabem num configurador. Escreve-nos: uma pessoa da DÍGITO fala contigo, mede a tua mão contigo e desenha uma peça única. Só pagas depois de aprovares o orçamento.</p>
+            <ol className="contigo-steps">
+              <li><span><b>Escreves</b> o que é difícil hoje.</span></li>
+              <li><span><b>Falamos</b> por email, telefone, videochamada ou ao vivo.</span></li>
+              <li><span><b>Medimos</b> e, se for preciso, testamos um protótipo.</span></li>
+              <li><span><b>Fazemos</b> a tua capa e acompanhamos o uso.</span></li>
+            </ol>
+            <div className="row" style={{ gap: 12 }}><Link className="key key-dark key-lg" to="/feito-contigo">Fazer um pedido especial</Link><Link className="key key-alu key-lg" to="/feito-contigo#pedido">Sou terapeuta</Link></div>
+          </div>
+        </div>
+      </section>
 
       <section className="wrap why-band" id="porque">
         <div className="band-head reveal"><span className="why-kicker">Porque existe a DÍGITO</span><h2>Uma mão média não serve a todos</h2><p>Para muitos, um telemóvel difícil de segurar é só um incómodo. Para quem tem tremor, artrose ou pouca força, é uma barreira. O que dizem os dados:</p></div>
@@ -202,7 +226,7 @@ export default function Home() {
 
       <section className="band">
         <div className="wrap">
-          <div className="band-head reveal"><h2>Quatro materiais, quatro processos</h2><p>A folga de cada encaixe é corrigida para o material que escolhes.</p></div>
+          <div className="band-head reveal"><h2>Materiais escolhidos para cada função</h2><p>Flexível onde amortece, rígido onde apoia. A folga de cada encaixe é corrigida para o material que escolhes.</p></div>
           <div className="mat-grid">
             {MATS.map(m => (
               <div key={m.name} className="mat reveal">
@@ -217,9 +241,10 @@ export default function Home() {
       </section>
 
       <section className="wrap cta-final reveal">
-        <h2>Desenha pegas. Vende-as aqui.</h2>
-        <p>Qualquer pega com o encaixe DÍGITO serve em todas as capas. Publica o teu design e nós imprimimos e enviamos.</p>
-        <div className="row" style={{ justifyContent: 'center' }}><Link to="/vender" className="key key-dark key-lg">Abrir a minha banca</Link><Link to="/configurar" className="key key-alu key-lg">Configurar uma capa</Link></div>
+        <h2>A tua mão é a medida.</h2>
+        <p>Começa pelo configurador ou fala connosco. Em ambos os casos, a capa é feita só para ti.</p>
+        <div className="row" style={{ justifyContent: 'center' }}><Link to="/configurar" className="key key-dark key-lg">Configurar a minha capa</Link><Link to="/feito-contigo" className="key key-alu key-lg">Fazer um pedido especial</Link></div>
+        <p className="hint" style={{ marginTop: 8 }}>Desenhas pegas? <Link to="/vender">Abre a tua banca</Link>: todas usam o mesmo encaixe.</p>
       </section>
     </>
   );

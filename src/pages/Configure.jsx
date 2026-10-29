@@ -351,6 +351,7 @@ export default function Configure() {
               </div>
               <div className="field"><label htmlFor="nm">Nome do design</label><input id="nm" className="input" value={name} maxLength={60} onChange={e => setName(e.target.value)} /></div>
               <div className="row"><button className="key key-line key-sm" onClick={downloadSTL}><Icon n="download" size={20} />Descarregar STL</button>{!user && <span className="hint">Para comprar, <Link to="/entrar?voltar=/configurar">entra na tua conta</Link>.</span>}</div>
+              <Link className="custom-cta" to={`/feito-contigo?telemovel=${encodeURIComponent(phone.name)}#pedido`}><Icon n="forum" /><span><b>Não é bem isto?</b>Fala connosco e fazemos uma capa contigo.</span><Icon n="arrow_forward" size={20} /></Link>
             </>}
           </div>
         </div>
@@ -375,6 +376,7 @@ export default function Configure() {
               <button className="key key-dark key-lg" onClick={() => { setWelcome(false); set({ started: true, step: 0 }); }}>Começar</button>
               {S.maxStep > 0 && <button className="key key-alu key-lg" onClick={() => { setWelcome(false); set({ started: true }); }}>Continuar onde fiquei</button>}
             </div>
+            <p className="hint">Precisas de algo que o configurador não faz? <Link to="/feito-contigo">Faz um pedido especial</Link>.</p>
           </div>
         </div>
       )}
