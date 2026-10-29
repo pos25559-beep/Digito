@@ -43,6 +43,7 @@ Depois, no Supabase (**Authentication → URL Configuration**):
    `https://utfvcricxfkyiqxaxeci.supabase.co/functions/v1/stripe-webhook`, eventos `checkout.session.completed` e `checkout.session.expired`.
    Copiar o *Signing secret* (`whsec_…`) para o secret `STRIPE_WEBHOOK_SECRET` no Supabase.
 4. Testar com o cartão `4242 4242 4242 4242`, qualquer data futura e qualquer CVC.
+5. Os métodos de pagamento (cartão, MB WAY, Klarna, Link…) ligam-se e desligam-se em Stripe → Settings → Payment methods; o código não os fixa.
 
 O preço é sempre recalculado no servidor (`create-checkout`); o browser não consegue alterar o que se paga.
 

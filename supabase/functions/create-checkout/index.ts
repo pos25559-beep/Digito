@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY");
+  const STRIPE_KEY = (Deno.env.get("STRIPE_SECRET_KEY") || "").trim();
   if (!STRIPE_KEY) return json({ error: "payments_not_configured", message: "Os pagamentos ainda não estão ligados a uma conta Stripe." }, 503);
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
   })));
   if (ierr) return json({ error: "order_items_failed", message: ierr.message }, 500);
 
-  // Stripe Checkout via REST (form-encoded)
+  // Stripe Checkout via REST. Os métodos de pagamento (cartão, MB WAY, …) vêm das definições do Dashboard.
   const f = new URLSearchParams();
   f.set("mode", "payment");
   f.set("success_url", `${origin}/encomenda/sucesso?order=${order.id}&session_id={CHECKOUT_SESSION_ID}`);
@@ -76,7 +76,6 @@ Deno.serve(async (req) => {
   f.set("payment_intent_data[metadata][order_id]", order.id);
   if (user.email) f.set("customer_email", user.email);
   f.set("locale", "pt");
-  f.append("payment_method_types[]", "card");
   lines.forEach((l, i) => {
     f.set(`line_items[${i}][quantity]`, String(l.qty));
     f.set(`line_items[${i}][price_data][currency]`, "eur");
@@ -95,6 +94,7 @@ Deno.serve(async (req) => {
   });
   const session = await r.json();
   if (!r.ok) {
+    console.error("stripe_error", r.status, session?.error?.type, session?.error?.code, session?.error?.param, session?.error?.message);
     await admin.from("orders").update({ status: "cancelada" }).eq("id", order.id);
     return json({ error: "stripe_error", message: session?.error?.message || "Stripe recusou o pedido." }, 502);
   }
