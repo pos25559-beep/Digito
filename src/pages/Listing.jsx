@@ -14,7 +14,7 @@ export default function Listing() {
   const [fav, setFav] = useState(false); const [canReview, setCanReview] = useState(false);
   const [rv, setRv] = useState({ rating: 5, body: '' }); const [busy, setBusy] = useState(false);
   const load = async () => {
-    const { data } = await supabase.from('listings').select('*, seller:profiles(id,username,display_name,avatar_url)').eq('slug', slug).maybeSingle();
+    const { data } = await supabase.from('listings').select('*, seller:profiles!listings_seller_id_fkey(id,username,display_name,avatar_url)').eq('slug', slug).maybeSingle();
     setL(data || null);
     if (data) {
       const { data: r } = await supabase.from('reviews').select('*, author:profiles(username,display_name)').eq('listing_id', data.id).order('created_at', { ascending: false });

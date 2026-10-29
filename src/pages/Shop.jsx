@@ -10,7 +10,7 @@ export default function Shop() {
   const cat = sp.get('cat') || 'todos', sort = sp.get('ord') || 'populares', phone = sp.get('tel') || '', q = sp.get('q') || '';
   const [rows, setRows] = useState(null); const [err, setErr] = useState('');
   useEffect(() => {
-    let query = supabase.from('listings').select('*, seller:profiles(username,display_name)').eq('status', 'ativo');
+    let query = supabase.from('listings').select('*, seller:profiles!listings_seller_id_fkey(username,display_name)').eq('status', 'ativo');
     if (cat !== 'todos') query = query.eq('category', cat);
     if (phone) query = query.contains('phone_models', [phone]);
     if (q.trim()) query = query.ilike('title', `%${q.trim().replace(/[%_]/g, '')}%`);

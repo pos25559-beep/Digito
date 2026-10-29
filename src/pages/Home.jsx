@@ -92,7 +92,7 @@ const SWATCHES = [
 export default function Home() {
   const [listings, setListings] = useState(null);
   useEffect(() => {
-    supabase.from('listings').select('*, seller:profiles(username,display_name)').eq('status', 'ativo').order('sales_count', { ascending: false }).limit(4)
+    supabase.from('listings').select('*, seller:profiles!listings_seller_id_fkey(username,display_name)').eq('status', 'ativo').order('sales_count', { ascending: false }).limit(4)
       .then(({ data }) => setListings(data || []));
   }, []);
   return (

@@ -97,7 +97,7 @@ function Orders() {
 }
 function Favorites() {
   const { user } = useAuth(); const [rows, setRows] = useState(null);
-  useEffect(() => { supabase.from('favorites').select('listing:listings(*, seller:profiles(username))').eq('user_id', user.id).then(({ data }) => setRows((data || []).map(r => r.listing).filter(Boolean))); }, [user.id]);
+  useEffect(() => { supabase.from('favorites').select('listing:listings(*, seller:profiles!listings_seller_id_fkey(username))').eq('user_id', user.id).then(({ data }) => setRows((data || []).map(r => r.listing).filter(Boolean))); }, [user.id]);
   if (!rows) return <Spinner />;
   return <div style={{ display: 'grid', gap: 18 }}><h2>Favoritos</h2>{!rows.length ? <Empty title="Sem favoritos" text="Toca no coração de um produto para o guardar aqui." /> : <div className="grid-shop">{rows.map(l => <ListingCard key={l.id} l={l} />)}</div>}</div>;
 }
