@@ -79,7 +79,7 @@ function Measure({ S, onApply }) {
     handles.current = [];
     const handle = (p, col, key) => { x.beginPath(); x.arc(p.x, p.y, 7.5 * lw, 0, 7); x.fillStyle = col; x.fill(); x.lineWidth = 2 * lw; x.strokeStyle = '#fff'; x.stroke(); handles.current.push({ p, key }); };
     const label = (px, py, t) => { x.font = `${12 * lw}px "B612 Mono", monospace`; const tw = x.measureText(t).width; x.fillStyle = 'rgba(185,193,165,.95)'; x.fillRect(px - tw / 2 - 5 * lw, py - 14 * lw, tw + 10 * lw, 19 * lw); x.fillStyle = '#1E2418'; x.textAlign = 'center'; x.fillText(t, px, py); };
-    E.FINGERS.forEach(f => { const [a, b] = cal[f]; x.strokeStyle = '#fff'; x.lineWidth = 2 * lw; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); handle(a, '#2a2c30', f + '0'); handle(b, '#2a2c30', f + '1'); const mm = k ? Math.hypot(a.x - b.x, a.y - b.y) * k : null; label((a.x + b.x) / 2, Math.min(a.y, b.y) - 13 * lw, mm ? fmt(mm) + ' mm' : E.FINGER_PT[f]); });
+    E.FINGERS.forEach((f, fi) => { const [a, b] = cal[f]; x.strokeStyle = '#fff'; x.lineWidth = 2 * lw; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); handle(a, '#2a2c30', f + '0'); handle(b, '#2a2c30', f + '1'); const mm = k ? Math.hypot(a.x - b.x, a.y - b.y) * k : null; label((a.x + b.x) / 2, Math.min(a.y, b.y) - (13 + (fi % 2) * 22) * lw, mm ? fmt(mm) + ' mm' : E.FINGER_PT[f]); });
     const [p, q] = card; x.strokeStyle = '#E9A23B'; x.lineWidth = 3 * lw; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(q.x, q.y); x.stroke(); handle(p, '#E9A23B', 'c0'); handle(q, '#E9A23B', 'c1'); label((p.x + q.x) / 2, (p.y + q.y) / 2 - 13 * lw, 'cartão 85,6 mm');
   }, [img, lm, card, cal, k]);
   useEffect(() => { draw(); }, [draw]);
@@ -143,7 +143,7 @@ export default function Configure() {
 
   // viewer
   useEffect(() => {
-    const v = makeViewer(cv.current, { cam: [170, 70, 330], fov: 26, minD: 150, maxD: 900, bg: '#D6D1C8', transparent: true });
+    const v = makeViewer(cv.current, { cam: [200, 90, 430], fov: 26, minD: 160, maxD: 900, bg: '#D6D1C8', transparent: true });
     const model = new THREE.Group(); v.root.add(model);
     const pieces = { case: new THREE.Group(), grips: new THREE.Group(), phone: new THREE.Group() };
     model.add(pieces.case, pieces.grips, pieces.phone);
@@ -184,7 +184,7 @@ export default function Configure() {
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.phone.visible = view.phone; st.target = { ex: view.explode ? 1 : 0, fr: view.front ? 1 : 0 }; st.v.invalidate(); }, [view]);
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.grips.children.forEach((g, k) => g.userData.mat?.emissive?.set(k === hl ? '#5a3208' : '#000000')); st.v.invalidate(); }, [hl, phys]);
 
-  const go = i => set(s => ({ step: Math.max(0, Math.min(4, i)), maxStep: Math.max(s.maxStep, i) }));
+  const go = i => { set(s => ({ step: Math.max(0, Math.min(4, i)), maxStep: Math.max(s.maxStep, i) })); requestAnimationFrame(() => { const p = document.querySelector('.cfg-panel'); if (p) window.scrollTo({ top: window.innerWidth <= 1020 ? p.offsetTop - 62 : 0, behavior: 'smooth' }); }); };
   const applyMeasure = async h => {
     set({ measured: h, overrides: {} }); go(4); toast('Medidas da foto aplicadas às quatro pegas.');
     if (user) { await supabase.from('profiles').update({ hand: h }).eq('id', user.id); refreshProfile(); }

@@ -37,22 +37,24 @@ export async function loadImage(file) {
 export function defaultCalipers(w, h) {
   const cal = {}; E.FINGERS.forEach((f, i) => { const x = w * (0.3 + i * 0.1), y = h * 0.4; cal[f] = [{ x: x - w * 0.02, y }, { x: x + w * 0.02, y }]; }); return cal;
 }
-/** Largura automática: a partir da articulação do meio, caminha na normal ao osso até a cor deixar de ser pele. */
+/** Largura automática: a partir da articulação do meio, caminha na normal ao osso até encontrar o papel.
+ *  O fundo é estimado pela mediana da moldura da foto; rugas e sombras da pele são mais escuras que a pele,
+ *  nunca brancas como a folha, por isso não param a régua. */
 export function autoCalipers(lm, img) {
   const { data: D, w: W, h: H } = img, cal = {};
   const px = (x, y) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= H) return null; const o = (y * W + x) * 4; return [D[o], D[o + 1], D[o + 2]]; };
-  const avg = (x, y, r = 2) => { const s = [0, 0, 0]; let n = 0; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const c = px(x + dx, y + dy); if (c) { s[0] += c[0]; s[1] += c[1]; s[2] += c[2]; n++; } } return n ? s.map(v => v / n) : [0, 0, 0]; };
-  const dist = (a, b) => { const la = (a[0] + a[1] + a[2]) / 3, lb = (b[0] + b[1] + b[2]) / 3; const ca = a.map(v => v - la), cb = b.map(v => v - lb); return Math.hypot(ca[0] - cb[0], ca[1] - cb[1], ca[2] - cb[2]) * 1.6 + Math.abs(la - lb) * 0.6; };
+  const avg = (x, y, r = 1) => { const s = [0, 0, 0]; let n = 0; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const c = px(x + dx, y + dy); if (c) { s[0] += c[0]; s[1] += c[1]; s[2] += c[2]; n++; } } return n ? s.map(v => v / n) : null; };
+  const border = []; const st = Math.max(4, Math.round((W + H) / 400));
+  for (let x = 0; x < W; x += st) { border.push(px(x, 2), px(x, H - 3)); } for (let y = 0; y < H; y += st) { border.push(px(2, y), px(W - 3, y)); }
+  const med = k => { const v = border.filter(Boolean).map(c => c[k]).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+  const bg = [med(0), med(1), med(2)];
+  const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   E.FINGERS.forEach(f => {
-    const [m, p, d] = FIN_IDX[f], P = lm[p], A = lm[m], B = lm[d];
+    const [m, p, dd] = FIN_IDX[f], P = lm[p], A = lm[m], B = lm[dd];
     const L = Math.hypot(B.x - A.x, B.y - A.y) || 1, ux = (B.x - A.x) / L, uy = (B.y - A.y) / L, nx = -uy, ny = ux;
-    const skin = avg(P.x, P.y, 2), exp = L * RATIO[f];
-    const walk = sgn => {
-      const bg = avg(P.x + sgn * nx * exp * 1.3, P.y + sgn * ny * exp * 1.3, 2);
-      const tau = Math.max(18, 0.5 * dist(skin, bg)); let run = 0;
-      for (let t = 2; t < exp * 1.1; t += 0.5) { const c = avg(P.x + sgn * nx * t, P.y + sgn * ny * t, 1); if (dist(c, skin) > tau) { if (++run >= 3) return t - 1.0; } else run = 0; }
-      return exp / 2;
-    };
+    const skin = avg(P.x, P.y, 2) || [180, 140, 120], exp = L * RATIO[f], sb = Math.max(30, d(skin, bg));
+    const isBg = c => c && d(c, bg) < 0.42 * sb && d(c, bg) < d(c, skin);
+    const walk = sgn => { let run = 0; for (let t = 1; t < exp * 1.6; t += 0.5) { const c = avg(P.x + sgn * nx * t, P.y + sgn * ny * t, 1); if (!c || isBg(c)) { if (++run >= 4) return t - 1.5; } else run = 0; } return exp / 2; };
     const a = walk(1), b = walk(-1);
     cal[f] = [{ x: P.x + nx * a, y: P.y + ny * a }, { x: P.x - nx * b, y: P.y - ny * b }];
   });
