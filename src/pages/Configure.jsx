@@ -10,13 +10,29 @@ import { designPrice, eur, fmt } from '../lib/pricing.js';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.jsx';
 import { useCart } from '../lib/cart.jsx';
-import { Plate, LCD, Led, Icon, Range, useToast } from '../components/ui.jsx';
+import { Plate, LCD, Led, Icon, Range, useToast, reducedMotion } from '../components/ui.jsx';
 
 const TYPE_PT = { sela: 'Sela', ring: 'Anel', blank: 'Tampa cega' };
 const TYPE_ICON = { sela: 'swipe', ring: 'radio_button_unchecked', blank: 'hexagon' };
 const STEPS = ['Telemóvel', 'Mão', 'Pega', 'Medir', 'Afinar'];
 const KEY = 'digito.cfg.v1';
-const DEF = { phoneId: 'IPHONE_16_PRO_MAX', hand: 'RIGHT', sex: 'X', height: 172, style: 'PINKY_SHELF', measured: null, overrides: {}, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', dropH: 1.2, step: 0, maxStep: 0 };
+const DEF = { needs: [], phoneId: 'IPHONE_16_PRO_MAX', hand: 'RIGHT', sex: 'X', height: 172, style: 'PINKY_SHELF', measured: null, overrides: {}, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', dropH: 1.2, step: 0, maxStep: 0 };
+const NEEDS = [['tremor', 'A mão treme', 'radio_button_unchecked'], ['dor', 'Os dedos doem', 'swipe'], ['forca', 'Falta força', 'back_hand']];
+/** recomendação a partir das situações: estilo de pega e tipo de pega por dedo (indicador, médio, anelar, mindinho) */
+function preset(needs) {
+  const style = needs.includes('forca') || needs.includes('tremor') || !needs.length ? 'PINKY_SHELF' : 'FULL_4_FINGER';
+  const types = ['sela', needs.includes('tremor') ? 'ring' : 'sela', 'sela', 'sela'];
+  return { style, types };
+}
+function presetText(needs) {
+  if (!needs.length) return 'Sem nenhuma situação assinalada, recomendamos o mindinho por baixo e selas em todos os dedos: a pega mais confortável para a maioria das mãos.';
+  const t = [];
+  if (needs.includes('tremor')) t.push('um anel no dedo médio, para o telemóvel não cair se a mão tremer');
+  if (needs.includes('forca')) t.push('o mindinho por baixo, a sustentar o peso');
+  if (needs.includes('dor') && !needs.includes('forca') && !needs.includes('tremor')) t.push('os quatro dedos atrás, cada um apoiado na sua sela, para não teres de apertar');
+  else if (needs.includes('dor')) t.push('selas com o raio de cada dedo, para apoiar sem apertar');
+  return 'Recomendamos ' + t.join('; ') + '.';
+}
 const loadCfg = () => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEF; } };
 
 function handModel(S) {
@@ -190,7 +206,7 @@ export default function Configure() {
   }, []);
   const flyTo = useCallback(i => {
     const st = V.current; if (!st) return; const c = CAM[i] || CAM[4];
-    st.tween = { t0: performance.now(), d: 1100, p0: st.v.camera.position.clone(), p1: new THREE.Vector3(...c.p), q0: st.v.controls.target.clone(), q1: new THREE.Vector3(...c.t) };
+    st.tween = { t0: performance.now(), d: reducedMotion() ? 1 : 1100, p0: st.v.camera.position.clone(), p1: new THREE.Vector3(...c.p), q0: st.v.controls.target.clone(), q1: new THREE.Vector3(...c.t) };
   }, []);
   useEffect(() => { flyTo(S.step); if (V.current) V.current.hideTags = S.step === 0; scrollRef.current?.scrollTo({ top: 0 }); }, [S.step, flyTo]);
 
@@ -221,7 +237,7 @@ export default function Configure() {
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.phone.visible = view.phone; st.target = { ex: view.explode ? 1 : 0, fr: view.front ? 1 : 0 }; st.v.invalidate(); }, [view]);
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.grips.children.forEach((g, k) => g.userData.mat?.emissive?.set(k === hl ? '#0b3a8a' : '#000000')); st.v.invalidate(); }, [hl, phys]);
   // explodir brevemente ao entrar no passo final (mostra o encaixe)
-  useEffect(() => { if (S.step !== 4 || welcome) return; setView(v => ({ ...v, explode: true })); const t = setTimeout(() => setView(v => ({ ...v, explode: false })), 1600); return () => clearTimeout(t); }, [S.step, welcome]);
+  useEffect(() => { if (S.step !== 4 || welcome || reducedMotion()) return; setView(v => ({ ...v, explode: true })); const t = setTimeout(() => setView(v => ({ ...v, explode: false })), 1600); return () => clearTimeout(t); }, [S.step, welcome]);
 
   const go = i => set(s => ({ step: Math.max(0, Math.min(4, i)), maxStep: Math.max(s.maxStep, i) }));
   const applyMeasure = async h => {
@@ -301,12 +317,21 @@ export default function Configure() {
             </>}
 
             {S.step === 2 && <>
-              <div className="st-head"><span className="eyebrow">Passo 3 de 5</span><h2>Como seguras o telemóvel?</h2><p>Os desenhos usam as tuas medidas. Os pontos azuis são os encaixes.</p></div>
-              <div className="pick pick-1">{Object.entries(E.STYLES).map(([id, st]) => (
+              <div className="st-head"><span className="eyebrow">Passo 3 de 5</span><h2>Como seguras o telemóvel?</h2><p>Partimos do que é difícil para ti. Os desenhos usam as tuas medidas e os pontos azuis são os encaixes.</p></div>
+              <div className="field"><span className="lbl">O que é difícil para ti?</span>
+                <div className="pills">{NEEDS.map(([v, t, ic]) => { const on = S.needs.includes(v); return <button type="button" key={v} className={`pill ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => set(s => ({ needs: on ? s.needs.filter(x => x !== v) : [...s.needs, v] }))}><Icon n={on ? 'check' : ic} size={18} />{t}</button>; })}</div>
+              </div>
+              <div className="reco"><Icon n="lightbulb" /><div><p>{presetText(S.needs)}</p>{(() => { const p = preset(S.needs); const same = p.style === S.style && p.types.every((t, i) => t === S.types[i]); return same ? <span className="hint">Recomendação aplicada.</span> : <button type="button" className="key key-line key-sm" onClick={() => set(p)}>Aplicar recomendação</button>; })()}</div></div>
+              <div className="pick pick-1">{Object.entries(E.STYLES).filter(([id]) => id !== 'CAMERA_CLAW' || S.style === 'CAMERA_CLAW').map(([id, st]) => (
                 <button key={id} className="pk wide" aria-pressed={S.style === id} onClick={() => set({ style: id })}>
                   <span className="art"><StyleDiagram hand={hand} phoneId={S.phoneId} style={id} /></span>
                   <span style={{ display: 'grid', gap: 4 }}><b>{st.name}</b><small>{st.desc}</small></span>
                 </button>))}</div>
+              {S.style !== 'CAMERA_CLAW' && <details className="more"><summary>Outras formas de segurar</summary>
+                <button className="pk wide" aria-pressed={false} onClick={() => set({ style: 'CAMERA_CLAW' })}>
+                  <span className="art"><StyleDiagram hand={hand} phoneId={S.phoneId} style="CAMERA_CLAW" /></span>
+                  <span style={{ display: 'grid', gap: 4 }}><b>{E.STYLES.CAMERA_CLAW.name}</b><small>{E.STYLES.CAMERA_CLAW.desc}</small></span>
+                </button></details>}
             </>}
 
             {S.step === 3 && <>
@@ -371,9 +396,12 @@ export default function Configure() {
             <span style={{ width: 64, height: 64, borderRadius: 20, background: 'var(--blue-t)', display: 'grid', placeItems: 'center', color: 'var(--blue)' }}><Icon n="front_hand" size={36} /></span>
             <h1>Vamos criar a tua DÍGITO</h1>
             <p>Cinco passos, cerca de três minutos. A capa à tua volta muda a cada escolha que fazes.</p>
-            <div className="welcome-steps">{STEPS.map((t, i) => <span key={t} className="tagpill" style={{ background: 'var(--surface)' }}>{i + 1}. {t}</span>)}</div>
+            <fieldset className="need-pick">
+              <legend>O que é difícil para ti? <span className="hint">Podes escolher mais do que uma, ou nenhuma.</span></legend>
+              <div className="pills">{NEEDS.map(([v, t, ic]) => { const on = S.needs.includes(v); return <button type="button" key={v} className={`pill big ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => set(s => ({ needs: on ? s.needs.filter(x => x !== v) : [...s.needs, v] }))}><Icon n={on ? 'check' : ic} size={20} />{t}</button>; })}</div>
+            </fieldset>
             <div className="row" style={{ justifyContent: 'center' }}>
-              <button className="key key-dark key-lg" onClick={() => { setWelcome(false); set({ started: true, step: 0 }); }}>Começar</button>
+              <button className="key key-dark key-lg" onClick={() => { setWelcome(false); set(s => ({ started: true, step: 0, ...preset(s.needs) })); }}>Começar</button>
               {S.maxStep > 0 && <button className="key key-alu key-lg" onClick={() => { setWelcome(false); set({ started: true }); }}>Continuar onde fiquei</button>}
             </div>
             <p className="hint">Precisas de algo que o configurador não faz? <Link to="/feito-contigo">Faz um pedido especial</Link>.</p>

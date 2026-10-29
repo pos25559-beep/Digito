@@ -58,7 +58,7 @@ export default function Listing() {
           <p style={{ fontSize: 18, color: 'var(--ink-2)' }}>{l.summary}</p>
           <Plate pad style={{ display: 'grid', gap: 16 }}>
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <span className="bezel"><LCD value={eur(l.price_cents * qty)} /></span>
+              <span className="price big">{eur(l.price_cents * qty)}</span>
               <div className="qty" role="group" aria-label="Quantidade">
                 <button className="key key-alu key-sm key-icon" onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Menos um">−</button>
                 <LCD value={qty} />

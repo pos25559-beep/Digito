@@ -74,7 +74,7 @@ function Designs() {
           <div className="row-item" key={d.id}><span className="ph" style={{ display: 'grid', placeItems: 'center' }}><Led on /></span>
             <div style={{ minWidth: 0 }}><h4>{d.name}</h4><span className="hint">{E.PHONES[d.phone_model]?.name} · {E.STYLES[d.grip_style]?.name} · {E.MATERIALS[d.grip_material]?.name} · {d.grips.map(g => fmt(g.w)).join(' / ')} mm</span>
               <div className="row" style={{ marginTop: 8 }}><button className="key key-dark key-sm" onClick={() => { cart.add({ design_id: d.id, title: `Kit à medida — ${d.name}`, price_cents: p, image: null, phone: E.PHONES[d.phone_model]?.name }); toast('No carrinho.'); }}>Adicionar ao carrinho</button><button className="key key-alu key-sm" onClick={() => del(d.id)}>Apagar</button></div></div>
-            <span className="mono">{eur(p)}</span></div>); })}</div>}
+            <span className="price">{eur(p)}</span></div>); })}</div>}
     </div>
   );
 }
@@ -93,8 +93,8 @@ function Orders() {
         <div className="list">{rows.map(o => (
           <Plate key={o.id} pad style={{ display: 'grid', gap: 10 }}>
             <div className="row" style={{ justifyContent: 'space-between' }}><span className="status"><Led on color={LED_OF[o.status]} />{STATUS_PT[o.status]}</span><span className="mono hint">#{o.id.slice(0, 8)} · {new Date(o.created_at).toLocaleDateString('pt-PT')}</span></div>
-            {o.items.map(i => <div className="sumline" key={i.id}><span>{i.quantity} × {i.title}</span><span className="mono">{eur(i.unit_price_cents * i.quantity)}</span></div>)}
-            <div className="sumline total"><span>Total</span><span className="mono">{eur(o.total_cents)}</span></div>
+            {o.items.map(i => <div className="sumline" key={i.id}><span>{i.quantity} × {i.title}</span><span className="price">{eur(i.unit_price_cents * i.quantity)}</span></div>)}
+            <div className="sumline total"><span>Total</span><span className="price">{eur(o.total_cents)}</span></div>
           </Plate>))}</div>}
     </div>
   );

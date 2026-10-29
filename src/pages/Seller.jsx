@@ -35,7 +35,7 @@ function Editor({ listing, onDone }) {
     const { error } = listing ? await supabase.from('listings').update(row).eq('id', listing.id)
       : await supabase.from('listings').insert({ ...row, seller_id: user.id, slug: `${slugify(f.title) || 'design'}-${Math.random().toString(36).slice(2, 6)}` });
     setBusy(false);
-    if (error) setErr('Não foi possível guardar: ' + error.message); else { toast(listing ? 'Anúncio atualizado.' : 'Anúncio publicado.'); onDone(); }
+    if (error) setErr('Não foi possível guardar: ' + error.message); else { toast(f.status === 'ativo' && !(listing?.status === 'ativo' && listing.title === f.title.trim() && listing.description === (f.description.trim() || null)) ? 'Enviado para revisão. Avisamos quando estiver publicado.' : listing ? 'Anúncio atualizado.' : 'Anúncio guardado.'); onDone(); }
   };
   return (
     <form onSubmit={save} style={{ display: 'grid', gap: 16 }}>
@@ -53,7 +53,7 @@ function Editor({ listing, onDone }) {
       <div className="field"><span className="lbl">Fotografias ({f.images.length}/4)</span>
         <div className="row">{f.images.map(u => <span key={u} style={{ position: 'relative' }}><img src={img(u)} alt="" style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 8 }} /><button type="button" className="key key-dark key-sm key-icon" style={{ position: 'absolute', top: -8, right: -8, '--h': '26px' }} aria-label="Remover fotografia" onClick={() => setF(s => ({ ...s, images: s.images.filter(x => x !== u) }))}>×</button></span>)}
           {f.images.length < 4 && <label className="key key-alu key-sm">Adicionar<input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr" onChange={upload} /></label>}</div></div>
-      <div className="field"><span className="lbl">Estado</span><div className="keyrow">{[['ativo', 'Publicado'], ['rascunho', 'Rascunho'], ['arquivado', 'Arquivado']].map(([k, t]) => <button type="button" key={k} className="key key-alu" aria-pressed={f.status === k} onClick={() => setF(s => ({ ...s, status: k }))}>{t}</button>)}</div></div>
+      <div className="field"><span className="lbl">Estado</span><div className="keyrow">{[['ativo', listing?.status === 'ativo' ? 'Publicado' : 'Enviar para revisão'], ['rascunho', 'Rascunho'], ['arquivado', 'Arquivado']].map(([k, t]) => <button type="button" key={k} className="key key-alu" aria-pressed={f.status === k} onClick={() => setF(s => ({ ...s, status: k }))}>{t}</button>)}</div></div>
       <p className="note">Qualquer pega vendida aqui tem de usar o encaixe DÍGITO: macho hexagonal de 10,0 mm entre faces (menos a folga do material), 2,6 mm de altura, com sede para íman Ø6×2.</p>
       {err && <p className="err" role="alert">{err}</p>}
       <button className="key key-dark key-lg" disabled={busy}>{busy ? 'A guardar…' : listing ? 'Guardar alterações' : 'Publicar anúncio'}</button>
@@ -73,10 +73,10 @@ export default function Seller() {
   if (!user || !profile?.is_seller) return (
     <div className="wrap" style={{ paddingBlock: 60 }}>
       <Plate screws pad style={{ display: 'grid', gap: 18, maxWidth: 760, margin: '0 auto' }}>
-        <span className="engrave">Banca DÍGITO</span>
-        <h1 style={{ fontSize: 'clamp(36px,5vw,60px)', fontWeight: 800 }}>Desenha pegas. Vende-as aqui.</h1>
-        <p style={{ fontSize: 17, color: 'var(--ink-2)' }}>Publica pegas, tampas ou acessórios que usem o encaixe DÍGITO. Defines o preço, nós cobramos pela Stripe e tu acompanhas cada venda no teu painel.</p>
-        <ul style={{ margin: 0, paddingLeft: 18, color: 'var(--ink-2)', display: 'grid', gap: 6 }}><li>Anúncios com até 4 fotografias, em rascunho ou publicados</li><li>Página pública com o teu nome de utilizador</li><li>Avaliações só de quem comprou</li></ul>
+        <span className="engrave">Banca DÍGITO · para terapeutas, makers e designers</span>
+        <h1 style={{ fontSize: 'clamp(36px,5vw,56px)' }}>Desenhaste uma pega que ajuda alguém? Partilha-a aqui.</h1>
+        <p style={{ fontSize: 17, color: 'var(--ink-2)' }}>Publica pegas, tampas ou acessórios que usem o encaixe DÍGITO. Cada desenho é revisto pela equipa antes de ficar visível na loja: confirmamos que encaixa, que é seguro de usar e que a descrição corresponde ao que a peça faz. Tu defines o preço, nós cobramos pela Stripe e acompanhas cada venda no teu painel.</p>
+        <ul style={{ margin: 0, paddingLeft: 18, color: 'var(--ink-2)', display: 'grid', gap: 6 }}><li>Revisão de cada desenho antes de ser publicado</li><li>Anúncios com até 4 fotografias</li><li>Página pública com o teu nome de utilizador</li><li>Avaliações só de quem comprou</li></ul>
         {user ? <button className="key key-brass key-lg" style={{ justifySelf: 'start' }} onClick={async () => { const { error } = await supabase.from('profiles').update({ is_seller: true }).eq('id', user.id); if (error) toast('Não foi possível abrir a banca.'); else { await refreshProfile(); toast('Banca aberta. Publica o teu primeiro anúncio.'); } }}>Abrir a minha banca</button>
           : <button className="key key-brass key-lg" style={{ justifySelf: 'start' }} onClick={() => nav('/entrar?voltar=/vender')}>Entrar para começar</button>}
       </Plate>
@@ -90,7 +90,7 @@ export default function Seller() {
       <div className="stat-row" style={{ marginBottom: 22 }}>
         <div className="field"><span className="lbl">Anúncios ativos</span><span className="bezel" style={{ display: 'block' }}><LCD value={(rows || []).filter(r => r.status === 'ativo').length} /></span></div>
         <div className="field"><span className="lbl">Unidades vendidas</span><span className="bezel" style={{ display: 'block' }}><LCD value={units} /></span></div>
-        <div className="field"><span className="lbl">Receita bruta</span><span className="bezel" style={{ display: 'block' }}><LCD value={eur(revenue)} /></span></div>
+        <div className="field"><span className="lbl">Receita bruta</span><span className="price big">{eur(revenue)}</span></div>
       </div>
       <div className="row" style={{ marginBottom: 18 }}>
         <div className="keyrow"><Link className="key key-alu" aria-pressed={tab === 'anuncios'} to="/vender/anuncios">Anúncios</Link><Link className="key key-alu" aria-pressed={tab === 'vendas'} to="/vender/vendas">Vendas</Link></div>
@@ -107,8 +107,8 @@ export default function Seller() {
           : (!rows ? <Spinner /> : !rows.length ? <Empty title="Ainda sem anúncios" text="Publica a tua primeira pega."><button className="key key-dark" onClick={() => setEdit('new')}>Novo anúncio</button></Empty> :
             <div className="list">{rows.map(r => (
               <div className="row-item" key={r.id}>{r.images?.[0] ? <img src={img(r.images[0])} alt="" /> : <span className="ph" />}
-                <div style={{ minWidth: 0 }}><h4>{r.title}</h4><span className="status"><Led on={r.status === 'ativo'} color={r.status === 'ativo' ? 'green' : ''} />{r.status} · {CATEGORY_PT[r.category]} · {r.sales_count} vendidos</span></div>
-                <div className="row"><span className="mono">{eur(r.price_cents)}</span><button className="key key-alu key-sm" onClick={() => setEdit(r)}>Editar</button>{r.status === 'ativo' && <Link className="key key-alu key-sm" to={`/loja/${r.slug}`}>Ver</Link>}</div>
+                <div style={{ minWidth: 0 }}><h4>{r.title}</h4><span className="status"><Led on={r.status === 'ativo'} color={r.status === 'ativo' ? 'green' : ''} />{({ ativo: 'publicado', rascunho: 'rascunho', em_revisao: 'em revisão', arquivado: 'arquivado' })[r.status] || r.status} · {CATEGORY_PT[r.category]} · {r.sales_count} vendidos</span></div>
+                <div className="row"><span className="price">{eur(r.price_cents)}</span><button className="key key-alu key-sm" onClick={() => setEdit(r)}>Editar</button>{r.status === 'ativo' && <Link className="key key-alu key-sm" to={`/loja/${r.slug}`}>Ver</Link>}</div>
               </div>))}</div>)}
       </Plate>
     </div>

@@ -12,7 +12,7 @@ export default function PublicProfile() {
     });
   }, [username]);
   if (p === undefined) return <Spinner />;
-  if (!p) return <div className="wrap"><Empty title="Perfil não encontrado"><Link className="key key-alu" to="/loja">Ir à loja</Link></Empty></div>;
+  if (!p) return <div className="wrap"><Empty level="h1" title="Perfil não encontrado"><Link className="key key-alu" to="/loja">Ir à loja</Link></Empty></div>;
   return (
     <div className="wrap" style={{ paddingBottom: 90 }}>
       <Plate screws pad style={{ display: 'flex', gap: 22, alignItems: 'center', flexWrap: 'wrap', marginBlock: 40 }}>

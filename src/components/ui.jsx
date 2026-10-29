@@ -36,8 +36,9 @@ export function ToastProvider({ children }) {
   return <ToastCtx.Provider value={toast}>{children}<div className={`toast ${on ? 'on' : ''}`} role="status" aria-live="polite">{msg}</div></ToastCtx.Provider>;
 }
 export const useToast = () => useContext(ToastCtx);
-export function Empty({ title, text, children }) {
-  return <div className="empty"><Icon n="deployed_code" size={48} style={{ color: '#80868B' }} /><h3>{title}</h3>{text && <p>{text}</p>}{children}</div>;
+export function Empty({ title, text, children, level = 'h3' }) {
+  const H = level;
+  return <div className="empty"><Icon n="deployed_code" size={48} style={{ color: '#80868B' }} /><H className="empty-t">{title}</H>{text && <p>{text}</p>}{children}</div>;
 }
 export function Spinner() { return <div className="loading"><span className="spin" aria-label="A carregar" /></div>; }
 /** revela elementos .reveal quando entram no ecrã */
@@ -50,3 +51,6 @@ export function useReveal() {
     return () => io.disconnect();
   });
 }
+
+/** o utilizador pediu menos movimento no sistema */
+export const reducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

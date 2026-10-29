@@ -7,24 +7,25 @@ import * as G from '../lib/geometry.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
 import { fmt, eur } from '../lib/pricing.js';
 import { HIGHLIGHTS } from '../lib/why.js';
-import { Icon, Range, useReveal } from '../components/ui.jsx';
+import { Icon, Range, useReveal, reducedMotion } from '../components/ui.jsx';
 
 const V = f => `${BASE}/video/${f}`;
 
 function AutoVideo({ src, poster, label }) {
   const ref = useRef();
+  const still = reducedMotion();
   useEffect(() => {
-    const el = ref.current; if (!el) return;
+    const el = ref.current; if (!el || still) return;
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) el.play().catch(() => {}); else el.pause(); }, { threshold: 0.25 });
     io.observe(el); return () => io.disconnect();
   }, []);
-  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} />;
+  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} controls={still} />;
 }
 
 function Lab() {
   const cv = useRef(); const view = useRef(); const [w, setW] = useState(19.2); const [style, setStyle] = useState('FULL_4_FINGER'); const [d, setD] = useState({});
   useEffect(() => {
-    const v = makeViewer(cv.current, { cam: [200, 150, 290], fov: 24, minD: 200, maxD: 700, autoRotate: true, spin: 0.0025, transparent: true, noZoom: true, shadow: 0.1 });
+    const v = makeViewer(cv.current, { cam: [200, 150, 290], fov: 24, minD: 200, maxD: 700, autoRotate: !reducedMotion(), spin: 0.0025, transparent: true, noZoom: true, shadow: 0.1 });
     v.renderer.toneMappingExposure = 1.05;
     const model = new THREE.Group(); v.root.add(model);
     view.current = { v, model, mats: makeMats(), gm: gripMaterial('FDM_PETG_CF') };

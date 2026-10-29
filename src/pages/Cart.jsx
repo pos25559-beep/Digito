@@ -35,7 +35,7 @@ export default function Cart() {
     }
     window.location.assign(data.url);
   };
-  if (!cart.items.length) return <div className="wrap" style={{ paddingBlock: 60 }}><Empty title="O carrinho está vazio" text="Escolhe uma peça da loja ou configura um kit à tua medida."><div className="row"><Link className="key key-dark" to="/configurar">Configurar</Link><Link className="key key-alu" to="/loja">Ir à loja</Link></div></Empty></div>;
+  if (!cart.items.length) return <div className="wrap" style={{ paddingBlock: 60 }}><Empty level="h1" title="O carrinho está vazio" text="Escolhe uma peça da loja ou configura um kit à tua medida."><div className="row"><Link className="key key-dark" to="/configurar">Configurar</Link><Link className="key key-alu" to="/loja">Ir à loja</Link></div></Empty></div>;
   return (
     <div className="wrap">
       <div className="page-head"><span className="engrave">{cart.count} {cart.count === 1 ? 'artigo' : 'artigos'}</span><h1>Carrinho</h1></div>
@@ -49,7 +49,7 @@ export default function Cart() {
                   <button className="key key-alu key-sm key-icon" aria-label="Menos um" onClick={() => cart.setQty(k, i.quantity - 1)}>−</button><LCD value={i.quantity} /><button className="key key-alu key-sm key-icon" aria-label="Mais um" onClick={() => cart.setQty(k, i.quantity + 1)}>+</button>
                   <button className="key key-alu key-sm" onClick={() => cart.remove(k)}>Remover</button>
                 </div></div>
-              <span className="mono">{eur(i.price_cents * i.quantity)}</span>
+              <span className="price">{eur(i.price_cents * i.quantity)}</span>
             </div>); })}
         </Plate>
         <Plate screws className="cart-sum">
@@ -62,10 +62,10 @@ export default function Cart() {
             <input className="input" placeholder="Morada" autoComplete="address-line1" value={addr.line1} onChange={e => setAddr(a => ({ ...a, line1: e.target.value }))} />
             <div className="row"><input className="input" style={{ width: 120 }} placeholder="1000-001" autoComplete="postal-code" value={addr.postal} onChange={e => setAddr(a => ({ ...a, postal: e.target.value }))} /><input className="input" style={{ flex: 1, width: 'auto' }} placeholder="Localidade" autoComplete="address-level2" value={addr.city} onChange={e => setAddr(a => ({ ...a, city: e.target.value }))} /></div>
           </div>}
-          <div className="sumline"><span>Subtotal</span><span className="mono">{eur(cart.subtotal)}</span></div>
-          <div className="sumline"><span>Envio</span><span className="mono">{shipping ? eur(shipping) : 'grátis'}</span></div>
+          <div className="sumline"><span>Subtotal</span><span className="price">{eur(cart.subtotal)}</span></div>
+          <div className="sumline"><span>Envio</span><span className="price">{shipping ? eur(shipping) : "grátis"}</span></div>
           {ship === 'ctt' && cart.subtotal < FREE_SHIPPING_FROM && <span className="hint">Envio grátis a partir de {eur(FREE_SHIPPING_FROM)}.</span>}
-          <div className="sumline total"><span>Total</span><span className="bezel"><LCD value={eur(cart.subtotal + shipping)} /></span></div>
+          <div className="sumline total"><span>Total</span><span className="price big">{eur(cart.subtotal + shipping)}</span></div>
           {hasCustom && <div className="legal-note small"><Icon n="straighten" /><p>Os kits à medida são fabricados para ti e <b>não têm direito de livre resolução</b>. Mantêm a garantia de 3 anos contra defeitos.</p></div>}
           <label className="check"><input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} /><span>Li e aceito os <Link to="/termos" target="_blank">Termos de venda</Link> e a <Link to="/privacidade" target="_blank">Privacidade</Link>.</span></label>
           {hasCustom && <label className="check"><input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} /><span>Sei que os produtos à medida não podem ser devolvidos por desistência.</span></label>}
