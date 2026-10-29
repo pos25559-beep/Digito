@@ -10,9 +10,10 @@ import { designPrice, eur, fmt } from '../lib/pricing.js';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.jsx';
 import { useCart } from '../lib/cart.jsx';
-import { Plate, LCD, Led, Switch, useToast } from '../components/ui.jsx';
+import { Plate, LCD, Led, Icon, Range, useToast } from '../components/ui.jsx';
 
 const TYPE_PT = { sela: 'Sela', ring: 'Anel', blank: 'Tampa cega' };
+const TYPE_ICON = { sela: 'swipe', ring: 'radio_button_unchecked', blank: 'hexagon' };
 const STEPS = ['Telemóvel', 'Mão', 'Pega', 'Medir', 'Afinar'];
 const KEY = 'digito.cfg.v1';
 const DEF = { phoneId: 'IPHONE_16_PRO_MAX', hand: 'RIGHT', sex: 'X', height: 172, style: 'PINKY_SHELF', measured: null, overrides: {}, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', dropH: 1.2, step: 0, maxStep: 0 };
@@ -34,10 +35,10 @@ function StyleDiagram({ hand, phoneId, style }) {
   const p = E.PHONES[phoneId], socks = E.sockets(hand, p, style), s = 0.42, W = p.W * s, H = p.L * s, cb = E.camBox(p), chi = hand.hand === 'LEFT' ? -1 : 1;
   return (
     <svg width="92" height="110" viewBox={`${-W / 2 - 22} ${-H / 2 - 6} ${W + 44} ${H + 12}`} aria-hidden="true">
-      <rect x={-W / 2} y={-H / 2} width={W} height={H} rx={p.r * s} fill="#2a2c30" stroke="#121315" strokeWidth="1.5" />
-      <rect x={cb.xmin * s} y={-cb.ymax * s} width={p.camW * s} height={p.camH * s} rx={p.camR * s} fill="#0e0f11" />
-      {socks.map(k => { const fw = k.w * s * 0.95; return <g key={k.finger} transform={`translate(${k.x * s + chi * 14} ${-k.y * s}) rotate(${-k.theta})`}><rect x={-23 - chi * 6} y={-fw / 2} width="46" height={fw} rx={fw / 2} fill="#d8b9a2" opacity=".92" /></g>; })}
-      {socks.map(k => <circle key={'c' + k.finger} cx={k.x * s} cy={-k.y * s} r="3.4" fill="#E9A23B" stroke="#1c1d20" strokeWidth="1" />)}
+      <rect x={-W / 2} y={-H / 2} width={W} height={H} rx={p.r * s} fill="#3C4043" stroke="#202124" strokeWidth="1.2" />
+      <rect x={cb.xmin * s} y={-cb.ymax * s} width={p.camW * s} height={p.camH * s} rx={p.camR * s} fill="#202124" />
+      {socks.map(k => { const fw = k.w * s * 0.95; return <g key={k.finger} transform={`translate(${k.x * s + chi * 14} ${-k.y * s}) rotate(${-k.theta})`}><rect x={-23 - chi * 6} y={-fw / 2} width="46" height={fw} rx={fw / 2} fill="#F2C6A8" opacity=".95" /></g>; })}
+      {socks.map(k => <circle key={'c' + k.finger} cx={k.x * s} cy={-k.y * s} r="3.6" fill="#1A73E8" stroke="#fff" strokeWidth="1.2" />)}
     </svg>
   );
 }
@@ -122,16 +123,30 @@ function Measure({ S, onApply }) {
   );
 }
 
-/* ---------------- página ---------------- */
+/* ---------------- estúdio (página) ---------------- */
+// posições de câmara por passo (mm, coordenadas do modelo: z = para fora das costas)
+const CAM = [
+  { p: [330, 110, 380], t: [0, 0, 0] },   // telemóvel: 3/4
+  { p: [50, 20, 560], t: [0, -8, 0] },    // mão: costas de frente, etiquetas legíveis
+  { p: [-150, 40, 520], t: [0, -10, 0] },  // pega: costas, ligeiramente de lado
+  { p: [-340, 170, 330], t: [0, 0, 0] },  // medir: vista lateral
+  { p: [300, 160, 420], t: [0, 0, 0] }    // afinar: herói
+];
+const PHONE_ART = p => { const s = 0.5, w = p.W * s, h = p.L * s, cb = E.camBox(p); return (
+  <svg width="56" height="88" viewBox={`${-w / 2 - 3} ${-h / 2 - 3} ${w + 6} ${h + 6}`} aria-hidden="true">
+    <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={p.r * s} fill="#3C4043" />
+    <rect x={cb.xmin * s} y={-cb.ymax * s} width={p.camW * s} height={p.camH * s} rx={p.camR * s} fill="#202124" stroke="#5F6368" strokeWidth=".6" />
+  </svg>); };
+
 export default function Configure() {
   const [S, setS] = useState(loadCfg);
   const set = patch => setS(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) }));
   const { user, profile, refreshProfile } = useAuth(); const cart = useCart(); const nav = useNavigate(); const toast = useToast();
   const [view, setView] = useState({ phone: true, explode: false, front: false }); const [hl, setHl] = useState(-1);
   const [name, setName] = useState('A minha DÍGITO'); const [saving, setSaving] = useState(false);
-  const cv = useRef(); const V = useRef(null); const built = useRef(null);
+  const [welcome, setWelcome] = useState(() => !S.started);
+  const cv = useRef(); const V = useRef(null); const built = useRef(null); const tagRefs = useRef([]); const scrollRef = useRef();
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* */ } }, [S]);
-  // medidas guardadas no perfil
   useEffect(() => { if (profile?.hand && !S.measured && !Object.keys(S.overrides).length) { set({ measured: profile.hand }); toast('Usámos as medidas guardadas no teu perfil.'); } }, [profile?.hand]); // eslint-disable-line
 
   const hand = useMemo(() => handModel(S), [S]);
@@ -141,31 +156,52 @@ export default function Configure() {
   const price = designPrice(grips, S.gripMat);
   const [phys, setPhys] = useState(null);
 
-  // viewer
+  // ---------- viewer + câmara cinematográfica + etiquetas projetadas ----------
   useEffect(() => {
-    const v = makeViewer(cv.current, { cam: [200, 90, 430], fov: 26, minD: 160, maxD: 900, bg: '#D6D1C8', transparent: true });
+    const v = makeViewer(cv.current, { cam: CAM[0].p, fov: 24, minD: 150, maxD: 900, transparent: true, shadow: 0.12 });
+    v.renderer.toneMappingExposure = 1.05;
     const model = new THREE.Group(); v.root.add(model);
     const pieces = { case: new THREE.Group(), grips: new THREE.Group(), phone: new THREE.Group() };
     model.add(pieces.case, pieces.grips, pieces.phone);
-    V.current = { v, model, pieces, mats: makeMats(), ex: 0, fr: 0, target: { ex: 0, fr: 0 } };
-    v.animate(() => {
-      const st = V.current; const { ex, fr } = st.target;
-      st.ex += (ex - st.ex) * 0.14; st.fr += (fr - st.fr) * 0.12;
+    const st = { v, model, pieces, mats: makeMats(), ex: 0, fr: 0, target: { ex: 0, fr: 0 }, tween: null, socks: [] };
+    V.current = st;
+    const tmp = new THREE.Vector3();
+    v.animate(t => {
+      st.ex += (st.target.ex - st.ex) * 0.12; st.fr += (st.target.fr - st.fr) * 0.1;
       st.pieces.grips.children.forEach(g => { g.position.z = g.userData.z0 + st.ex * 18; });
       st.pieces.phone.position.z = -st.ex * 22; st.model.rotation.y = st.fr * Math.PI;
+      if (st.tween) {
+        const k = Math.min(1, (t - st.tween.t0) / st.tween.d), e = 1 - Math.pow(1 - k, 4);
+        v.camera.position.lerpVectors(st.tween.p0, st.tween.p1, e); v.controls.target.lerpVectors(st.tween.q0, st.tween.q1, e);
+        if (k >= 1) st.tween = null;
+      }
+      // etiquetas: posição no ecrã do topo de cada pega
+      const r = cv.current?.getBoundingClientRect();
+      st.pieces.grips.children.forEach((g, i) => {
+        const el = tagRefs.current[i]; if (!el || !r) return;
+        tmp.set(0, 0, 11); g.localToWorld(tmp); tmp.project(v.camera);
+        const behind = st.fr > 0.5;
+        el.style.left = ((tmp.x + 1) / 2 * r.width) + 'px'; el.style.top = ((1 - tmp.y) / 2 * r.height - 6) + 'px';
+        el.classList.toggle('hide', behind || st.hideTags);
+      });
       return true;
     });
     return () => v.dispose();
   }, []);
-  // reconstrução
+  const flyTo = useCallback(i => {
+    const st = V.current; if (!st) return; const c = CAM[i] || CAM[4];
+    st.tween = { t0: performance.now(), d: 1100, p0: st.v.camera.position.clone(), p1: new THREE.Vector3(...c.p), q0: st.v.controls.target.clone(), q1: new THREE.Vector3(...c.t) };
+  }, []);
+  useEffect(() => { flyTo(S.step); if (V.current) V.current.hideTags = S.step === 0; scrollRef.current?.scrollTo({ top: 0 }); }, [S.step, flyTo]);
+
+  // ---------- reconstrução ----------
   useEffect(() => {
-    const t = setTimeout(() => {
+    const tm = setTimeout(() => {
       const st = V.current; if (!st) return;
       const pre = E.impact({ phone, h: S.dropH, gripMat: S.gripMat });
       const b = G.build({ phone, socks, types: S.types, gripMat: S.gripMat, tSide: pre.tSide, tCorner: pre.tCorner });
       built.current = b;
-      const gripVol = b.grips.reduce((s, g) => s + g.vol, 0) / 1000;
-      setPhys(E.impact({ phone, h: S.dropH, gripMat: S.gripMat, caseVolCm3: b.caseVol / 1000, gripVolCm3: gripVol, cornerVolMm3: b.cornerVol }));
+      setPhys(E.impact({ phone, h: S.dropH, gripMat: S.gripMat, caseVolCm3: b.caseVol / 1000, gripVolCm3: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, cornerVolMm3: b.cornerVol }));
       const { pieces, mats, v } = st;
       disposeGroup(pieces.case); disposeGroup(pieces.grips); disposeGroup(pieces.phone);
       b.caseParts.forEach(g => pieces.case.add(meshOf(g, mats.case)));
@@ -177,35 +213,39 @@ export default function Configure() {
         pieces.grips.add(grp);
       });
       const ph = G.phoneGroup(phone, mats); ph.children.forEach(c => { c.castShadow = true; }); pieces.phone.add(...ph.children);
+      pieces.phone.visible = view.phone;
       v.ground.position.y = -phone.L / 2 - 30; v.invalidate();
-    }, 50);
-    return () => clearTimeout(t);
+    }, 40);
+    return () => clearTimeout(tm);
   }, [socks, S.types, S.gripMat, S.dropH, phone]); // eslint-disable-line
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.phone.visible = view.phone; st.target = { ex: view.explode ? 1 : 0, fr: view.front ? 1 : 0 }; st.v.invalidate(); }, [view]);
-  useEffect(() => { const st = V.current; if (!st) return; st.pieces.grips.children.forEach((g, k) => g.userData.mat?.emissive?.set(k === hl ? '#5a3208' : '#000000')); st.v.invalidate(); }, [hl, phys]);
+  useEffect(() => { const st = V.current; if (!st) return; st.pieces.grips.children.forEach((g, k) => g.userData.mat?.emissive?.set(k === hl ? '#0b3a8a' : '#000000')); st.v.invalidate(); }, [hl, phys]);
+  // explodir brevemente ao entrar no passo final (mostra o encaixe)
+  useEffect(() => { if (S.step !== 4 || welcome) return; setView(v => ({ ...v, explode: true })); const t = setTimeout(() => setView(v => ({ ...v, explode: false })), 1600); return () => clearTimeout(t); }, [S.step, welcome]);
 
-  const go = i => { set(s => ({ step: Math.max(0, Math.min(4, i)), maxStep: Math.max(s.maxStep, i) })); requestAnimationFrame(() => { const p = document.querySelector('.cfg-panel'); if (p) window.scrollTo({ top: window.innerWidth <= 1020 ? p.offsetTop - 62 : 0, behavior: 'smooth' }); }); };
+  const go = i => set(s => ({ step: Math.max(0, Math.min(4, i)), maxStep: Math.max(s.maxStep, i) }));
   const applyMeasure = async h => {
     set({ measured: h, overrides: {} }); go(4); toast('Medidas da foto aplicadas às quatro pegas.');
     if (user) { await supabase.from('profiles').update({ hand: h }).eq('id', user.id); refreshProfile(); }
   };
+  const setW = (finger, w) => set(s => ({ overrides: { ...s.overrides, [finger]: Math.round(E.clamp(w, 12.5, 26) * 10) / 10 } }));
 
-  const downloadSTL = async () => {
-    const b = built.current; if (!b) return;
-    const zip = new JSZip(), slug = phone.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    zip.file(`capa_${slug}_TPU95A.stl`, G.toSTL(b.caseParts));
-    b.grips.forEach((g, i) => zip.file(`pega_${i + 1}_${g.sock.finger}_${S.types[i]}.stl`, G.toSTL(g.parts, new THREE.Matrix4().makeTranslation(0, 0, G.consts.PLUG_H))));
-    zip.file('LEIA-ME.txt', summary() + '\n\nImpressão sugerida\nCapa: TPU 95A, camada 0,2 mm, 3 perímetros, placa traseira para baixo, sem suportes.\nPegas: camada 0,12 mm, de lado; 100 % de enchimento no macho hexagonal.\nÍmanes Ø6×2 N42 colados na sede do macho e no fundo do encaixe, com polaridades opostas.\nUnidades: mm.\n');
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `digito_${slug}.zip`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    toast('Ficheiros STL descarregados.');
-  };
   const summary = () => [
     `DÍGITO — ${name}`, `Telemóvel: ${phone.name}`, `Mão: ${S.hand === 'LEFT' ? 'esquerda' : 'direita'} · Pega: ${E.STYLES[S.style].name}`,
     `Medidas: ${S.measured ? 'foto calibrada com cartão ISO/IEC 7810 ID-1' : `estimativa por altura (${S.height} cm)`} · palma ${fmt(hand.palm)} mm`,
     ...grips.map((g, i) => `  ${i + 1}. ${E.FINGER_PT[g.finger].padEnd(9)} ${fmt(g.w)} mm · ${TYPE_PT[g.type]} · x ${fmt(g.x)} y ${fmt(g.y)} θ ${fmt(g.theta, 0)}°`),
     `Pegas: ${E.MATERIALS[S.gripMat].name} (${E.MATERIALS[S.gripMat].proc}) · capa TPU 95A · queda de projeto ${fmt(S.dropH)} m`, `Preço: ${eur(price)}`
   ].join('\n');
+  const downloadSTL = async () => {
+    const b = built.current; if (!b) return;
+    const zip = new JSZip(), slug = phone.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    zip.file(`capa_${slug}_TPU95A.stl`, G.toSTL(b.caseParts));
+    b.grips.forEach((g, i) => zip.file(`pega_${i + 1}_${g.sock.finger}_${S.types[i]}.stl`, G.toSTL(g.parts, new THREE.Matrix4().makeTranslation(0, 0, G.consts.PLUG_H))));
+    zip.file('LEIA-ME.txt', summary() + '\n\nImpressão sugerida\nCapa: TPU 95A, camada 0,2 mm, 3 perímetros, placa traseira para baixo, sem suportes.\nPegas: camada 0,12 mm, de lado; 100 % de enchimento no macho.\nUnidades: mm.\n');
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `digito_${slug}.zip`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('Ficheiros STL descarregados.');
+  };
   const saveAndCart = async () => {
     if (!user) { toast('Entra na tua conta para guardar o design.'); nav('/entrar?voltar=/configurar'); return; }
     setSaving(true);
@@ -217,103 +257,127 @@ export default function Configure() {
   };
 
   const done = i => i < S.maxStep && i !== S.step;
+  const srcTxt = s => ({ photo: 'foto', manual: 'manual', estimate: 'estimativa', ratio: 'rácio' }[s] || 'estimativa');
+  const mt = E.MATERIALS[S.gripMat];
   return (
-    <div className="cfg">
-      <div className="cfg-stage">
-        <canvas ref={cv} aria-label="Pré-visualização 3D da capa e das pegas. Arrasta para rodar, scroll para aproximar." />
-        <div className="stage-top">
-          <div className="keyrow" role="group" aria-label="Vista">
-            <button className="key key-alu" aria-pressed={view.phone} onClick={() => setView(v => ({ ...v, phone: !v.phone }))}>Telemóvel</button>
-            <button className="key key-alu" aria-pressed={view.explode} onClick={() => setView(v => ({ ...v, explode: !v.explode }))}>Explodir</button>
-            <button className="key key-alu" aria-pressed={view.front} onClick={() => setView(v => ({ ...v, front: !v.front }))}>Frente</button>
-          </div>
-          <span className="bezel"><LCD value={eur(price)} /></span>
+    <div className="studio">
+      <div className="st-stage">
+        <canvas ref={cv} aria-label="Pré-visualização 3D da tua capa. Arrasta para rodar, scroll para aproximar." />
+        <div className="st-tags" aria-hidden="true">
+          {socks.map((k, i) => <span key={k.finger} ref={el => { tagRefs.current[i] = el; }} className={`st-tag ${hl === i ? 'hl' : ''}`}>{E.FINGER_PT[k.finger]} <b>{fmt(k.w, 1)} mm</b></span>)}
         </div>
-        <div className="stage-bot">
-          <Plate className="coord mono">{socks.map(k => <div key={k.finger}>{E.FINGER_PT[k.finger].padEnd(9, ' ')} x {fmt(k.x)} · y {fmt(k.y)} · θ {fmt(k.theta, 0)}°</div>)}</Plate>
+        <span className="st-hint"><Icon n="3d_rotation" />Arrasta para rodar</span>
+        <div className="st-view" role="group" aria-label="Vista">
+          <button aria-pressed={view.phone} onClick={() => setView(v => ({ ...v, phone: !v.phone }))}><Icon n="smartphone" />Telemóvel</button>
+          <button aria-pressed={view.explode} onClick={() => setView(v => ({ ...v, explode: !v.explode }))}><Icon n="layers" />Explodir</button>
+          <button aria-pressed={view.front} onClick={() => setView(v => ({ ...v, front: !v.front }))}><Icon n="restart_alt" />Virar</button>
         </div>
       </div>
 
-      <Plate className="cfg-panel">
-        <div className="cfg-tabs" role="tablist">
-          {STEPS.map((t, i) => <button key={t} role="tab" aria-selected={S.step === i} aria-pressed={S.step === i} className="key key-alu" onClick={() => go(i)}><Led on={S.step === i || done(i)} color={done(i) ? 'green' : ''} /><span className="mono">{i + 1}</span>{t}</button>)}
-        </div>
+      <nav className="st-rail" aria-label="Passos">
+        {STEPS.map((t, i) => <button key={t} aria-current={S.step === i ? 'step' : undefined} className={done(i) ? 'done' : ''} onClick={() => go(i)}><span className="dotn">{done(i) ? 'check' : i + 1}</span>{t}</button>)}
+      </nav>
 
-        {S.step === 0 && <section className="cfg-pane">
-          <div><span className="engrave">Passo 1 de 5</span><h2>Que telemóvel tens?</h2></div>
-          <div className="opts">{Object.entries(E.PHONES).map(([id, p]) => {
-            const s = 0.26, w = p.W * s, h = p.L * s, cb = E.camBox(p);
-            return <button key={id} className="opt" aria-pressed={S.phoneId === id} onClick={() => set({ phoneId: id })}>
-              <svg width="30" height="46" viewBox={`${-w / 2 - 2} ${-h / 2 - 2} ${w + 4} ${h + 4}`} aria-hidden="true"><rect x={-w / 2} y={-h / 2} width={w} height={h} rx={p.r * s} fill="#2a2c30" /><rect x={cb.xmin * s} y={-cb.ymax * s} width={p.camW * s} height={p.camH * s} rx={p.camR * s} fill="#0e0f11" stroke="#555" strokeWidth=".4" /></svg>
-              <span><b>{p.name}</b><small>{p.brand}</small></span><span className="mono">{fmt(p.L)} × {fmt(p.W)} mm</span></button>;
-          })}</div>
-          <p className="note">Os cortes laterais (botões e USB-C) são aproximados. Confirma-os no teu telemóvel antes de imprimir a capa.</p>
-        </section>}
+      <aside className="st-panel" aria-label="Configuração">
+        <div className="st-scroll" ref={scrollRef}>
+          <div className="st-anim" key={S.step} style={{ display: 'grid', gap: 24 }}>
+            {S.step === 0 && <>
+              <div className="st-head"><span className="eyebrow">Passo 1 de 5</span><h2>Que telemóvel tens?</h2><p>A capa é desenhada à volta das medidas exatas do teu modelo.</p></div>
+              <div className="pick">{Object.entries(E.PHONES).map(([id, p]) => (
+                <button key={id} className="pk" aria-pressed={S.phoneId === id} onClick={() => set({ phoneId: id })}>
+                  <span className="art">{PHONE_ART(p)}</span><b>{p.name}</b><small className="mono">{fmt(p.L)} × {fmt(p.W)} mm</small>
+                </button>))}</div>
+              <p className="note">Os cortes dos botões e da porta USB-C são aproximados. Confirma-os no teu telemóvel antes de imprimir.</p>
+            </>}
 
-        {S.step === 1 && <section className="cfg-pane">
-          <div><span className="engrave">Passo 2 de 5</span><h2>Fala-nos da tua mão.</h2><p className="hint">Com isto fazemos uma primeira estimativa. No passo 4 medes com uma foto.</p></div>
-          <div className="field"><span className="lbl">Mão com que seguras</span><div className="keyrow">{[['RIGHT', 'Direita'], ['LEFT', 'Esquerda']].map(([k, t]) => <button key={k} className="key key-alu" aria-pressed={S.hand === k} onClick={() => set({ hand: k })}>{t}</button>)}</div></div>
-          <div className="field"><span className="lbl">Sexo (ajusta a proporção)</span><div className="keyrow">{[['F', 'Feminino'], ['M', 'Masculino'], ['X', 'Prefiro não dizer']].map(([k, t]) => <button key={k} className="key key-alu" aria-pressed={S.sex === k} onClick={() => set({ sex: k })}>{t}</button>)}</div></div>
-          <div className="field"><label htmlFor="h">Altura</label><div className="row"><input id="h" className="knurl" type="range" min="140" max="215" value={S.height} onChange={e => set({ height: +e.target.value })} style={{ flex: 1 }} /><LCD value={S.height} unit="cm" /></div></div>
-          {S.measured && <p className="note ok">Estás a usar as medidas da foto. <button className="key key-alu key-sm" onClick={() => set({ measured: null, overrides: {} })}>Voltar à estimativa</button></p>}
-          <table className="dat"><thead><tr><th>Dedo</th><th>Largura</th><th>Raio sela</th><th>Anel Ø</th></tr></thead><tbody>
-            {E.FINGERS.map(f => <tr key={f}><td>{E.FINGER_PT[f]}</td><td className="n">{fmt(hand.fingers[f].w)} mm</td><td className="n">{fmt(hand.fingers[f].rs)} mm</td><td className="n">{fmt(hand.fingers[f].ring)} mm</td></tr>)}
-            <tr><td>Palma</td><td className="n" colSpan="3">{fmt(hand.palm)} mm · <span className={`srcpill ${S.measured ? 'photo' : ''}`}>{S.measured ? 'foto' : 'estimativa'}</span></td></tr>
-          </tbody></table>
-        </section>}
+            {S.step === 1 && <>
+              <div className="st-head"><span className="eyebrow">Passo 2 de 5</span><h2>Fala-nos da tua mão</h2><p>Fazemos já uma estimativa. No passo 4 medes com uma foto.</p></div>
+              <div className="field"><span className="lbl">Mão com que seguras</span><div className="seg">{[['RIGHT', 'Direita'], ['LEFT', 'Esquerda']].map(([k, t]) => <button key={k} aria-pressed={S.hand === k} onClick={() => set({ hand: k })}>{t}</button>)}</div></div>
+              <div className="field"><span className="lbl">Proporção da mão</span><div className="seg">{[['F', 'Feminina'], ['M', 'Masculina'], ['X', 'Média']].map(([k, t]) => <button key={k} aria-pressed={S.sex === k} onClick={() => set({ sex: k })}>{t}</button>)}</div></div>
+              <div className="field"><label htmlFor="h">Altura</label><div className="bignum"><b>{S.height}</b><span>cm</span></div><Range id="h" min={140} max={215} value={S.height} onChange={v => set({ height: v })} /></div>
+              {S.measured && <p className="note ok">Estás a usar as medidas da tua foto. <button className="key key-ghost key-sm" onClick={() => set({ measured: null, overrides: {} })}>Voltar à estimativa</button></p>}
+              <div className="fingers">{E.FINGERS.map(f => <div key={f} className="fg"><span>{E.FINGER_PT[f]}</span><b>{fmt(hand.fingers[f].w, 1)}</b><span>mm</span></div>)}</div>
+              <span className="hint">Palma {fmt(hand.palm)} mm · {S.measured ? 'medida na foto' : 'estimativa pela altura'}</span>
+            </>}
 
-        {S.step === 2 && <section className="cfg-pane">
-          <div><span className="engrave">Passo 3 de 5</span><h2>Como seguras o telemóvel?</h2><p className="hint">Os desenhos usam as tuas medidas. Os pontos de latão são os encaixes.</p></div>
-          <div className="opts">{Object.entries(E.STYLES).map(([id, st]) => <button key={id} className="opt style" aria-pressed={S.style === id} onClick={() => set({ style: id })}><StyleDiagram hand={hand} phoneId={S.phoneId} style={id} /><span><b>{st.name}</b><small>{st.desc}</small></span><Led on={S.style === id} /></button>)}</div>
-        </section>}
+            {S.step === 2 && <>
+              <div className="st-head"><span className="eyebrow">Passo 3 de 5</span><h2>Como seguras o telemóvel?</h2><p>Os desenhos usam as tuas medidas. Os pontos azuis são os encaixes.</p></div>
+              <div className="pick pick-1">{Object.entries(E.STYLES).map(([id, st]) => (
+                <button key={id} className="pk wide" aria-pressed={S.style === id} onClick={() => set({ style: id })}>
+                  <span className="art"><StyleDiagram hand={hand} phoneId={S.phoneId} style={id} /></span>
+                  <span style={{ display: 'grid', gap: 4 }}><b>{st.name}</b><small>{st.desc}</small></span>
+                </button>))}</div>
+            </>}
 
-        {S.step === 3 && <section className="cfg-pane">
-          <div><span className="engrave">Passo 4 de 5 · opcional</span><h2>Mede a mão com uma foto.</h2></div>
-          <Measure S={S} onApply={applyMeasure} />
-        </section>}
+            {S.step === 3 && <>
+              <div className="st-head"><span className="eyebrow">Passo 4 de 5 · opcional</span><h2>Mede a mão com uma foto</h2><p>Mão aberta sobre uma folha branca, um cartão ao lado. Demora menos de um minuto.</p></div>
+              <Measure S={S} onApply={applyMeasure} />
+            </>}
 
-        {S.step === 4 && <section className="cfg-pane">
-          <div><span className="engrave">Passo 5 de 5</span><h2>Afina e encomenda.</h2></div>
-          <table className="dat"><thead><tr><th>Dedo</th><th>Largura</th><th>Pega</th><th /></tr></thead><tbody>
-            {socks.map((k, i) => { const f = hand.fingers[k.finger]; return (
-              <tr key={k.finger} className={hl === i ? 'hl' : ''} onMouseEnter={() => setHl(i)} onMouseLeave={() => setHl(-1)} onFocus={() => setHl(i)}>
-                <td>{E.FINGER_PT[k.finger]}</td>
-                <td><input className="input" type="number" min="12.5" max="26" step="0.1" defaultValue={f.w.toFixed(1)} key={f.w} aria-label={`Largura do ${E.FINGER_PT[k.finger]} em mm`} onBlur={e => { const v = E.clamp(+e.target.value || f.w, 12.5, 26); set(s => ({ overrides: { ...s.overrides, [k.finger]: Math.round(v * 10) / 10 } })); }} /></td>
-                <td><select className="input" value={S.types[i]} aria-label={`Tipo de pega do ${E.FINGER_PT[k.finger]}`} onChange={e => set(s => { const t = s.types.slice(); t[i] = e.target.value; return { types: t }; })}>{Object.entries(TYPE_PT).map(([v, t]) => <option key={v} value={v}>{k.role === 'shelf' && v === 'sela' ? 'Apoio' : t}</option>)}</select></td>
-                <td><span className={`srcpill ${f.src === 'photo' ? 'photo' : ''}`}>{{ photo: 'foto', manual: 'manual', estimate: 'estim.', ratio: 'rácio' }[f.src] || 'estim.'}</span></td>
-              </tr>); })}
-          </tbody></table>
-          <div className="field"><span className="lbl">Material das pegas</span>
-            <div className="opts">{E.GRIP_MATERIALS.map(id => { const m = E.MATERIALS[id]; return (
-              <button key={id} className="opt" aria-pressed={S.gripMat === id} onClick={() => set({ gripMat: id })}>
-                <span style={{ width: 22, height: 22, borderRadius: '50%', background: m.metal ? 'linear-gradient(135deg,#d9dce0,#7c8086)' : m.color, boxShadow: '0 1px 2px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3)' }} />
-                <span><b>{m.name} <span className="mono" style={{ fontWeight: 400 }}>{m.proc}</span></b><small>{m.note}</small></span><span className="mono">folga {fmt(m.c, 2)}</span></button>); })}</div>
+            {S.step === 4 && <>
+              <div className="st-head"><span className="eyebrow">Passo 5 de 5</span><h2>Afina cada pega</h2><p>Toca ou passa por cima de um dedo para o ver destacado no modelo.</p></div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {socks.map((k, i) => { const f = hand.fingers[k.finger]; return (
+                  <div key={k.finger} className={`gripcard ${hl === i ? 'hl' : ''}`} onMouseEnter={() => setHl(i)} onMouseLeave={() => setHl(-1)} onFocus={() => setHl(i)} onClick={() => setHl(i)}>
+                    <div className="gripcard-head">
+                      <span><b>{E.FINGER_PT[k.finger]}</b> <span className={`srcpill ${f.src === 'photo' ? 'photo' : ''}`}>{srcTxt(f.src)}</span></span>
+                      <span className="stepper" role="group" aria-label={`Largura do ${E.FINGER_PT[k.finger]}`}>
+                        <button onClick={() => setW(k.finger, f.w - 0.1)} aria-label="Menos 0,1 mm"><Icon n="remove" size={20} /></button>
+                        <span>{fmt(f.w, 1)} mm</span>
+                        <button onClick={() => setW(k.finger, f.w + 0.1)} aria-label="Mais 0,1 mm"><Icon n="add" size={20} /></button>
+                      </span>
+                    </div>
+                    <div className="typeicons" role="group" aria-label={`Tipo de pega do ${E.FINGER_PT[k.finger]}`}>
+                      {Object.entries(TYPE_PT).map(([v, t]) => <button key={v} aria-pressed={S.types[i] === v} onClick={() => set(s => { const tt = s.types.slice(); tt[i] = v; return { types: tt }; })}><Icon n={TYPE_ICON[v]} size={22} />{k.role === 'shelf' && v === 'sela' ? 'Apoio' : t}</button>)}
+                    </div>
+                  </div>); })}
+              </div>
+              <div className="field"><span className="lbl">Material das pegas</span>
+                <div className="swatches">{E.GRIP_MATERIALS.map(id => { const m = E.MATERIALS[id]; return (
+                  <button key={id} className="sw" aria-pressed={S.gripMat === id} onClick={() => set({ gripMat: id })}>
+                    <i style={{ background: m.metal ? 'linear-gradient(135deg,#e4e6e9,#8e9298 45%,#cfd2d6 60%,#7c8086)' : id === 'SLA_TOUGH' ? 'radial-gradient(circle at 35% 30%, #6b7484, #2d3440 70%)' : id === 'SLS_PA12' ? 'radial-gradient(circle at 40% 30%, #75767a, #3b3c3f 80%)' : 'repeating-linear-gradient(45deg,#2b2d31 0 2px,#3a3d42 2px 4px)' }} />
+                    <b>{m.name}</b><small>{m.proc}</small></button>); })}</div>
+                <span className="hint">{mt.note} Folga do encaixe {fmt(mt.c, 2)} mm.</span>
+              </div>
+              <div className="field">
+                <div className="row" style={{ justifyContent: 'space-between' }}><label htmlFor="dh">Altura de queda de projeto</label><span className="mono" style={{ color: 'var(--ink)' }}>{fmt(S.dropH)} m</span></div>
+                <Range id="dh" min={0.5} max={2} step={0.1} value={S.dropH} onChange={v => set({ dropH: v })} />
+                {phys && <div className="statgrid">
+                  <div className="stat"><span>Canto</span><b>{fmt(phys.tCorner, 1)} mm</b></div>
+                  <div className="stat"><span>Energia</span><b>{fmt(phys.Ereq, 2)} J</b></div>
+                  <div className="stat"><span>Pico no canto</span><b>−{phys.reduction} %</b></div>
+                </div>}
+                {phys && <span className="hint">Modelo analítico: {phys.G.toLocaleString('pt-PT')} g com capa contra {phys.Gbare.toLocaleString('pt-PT')} g sem capa. A validar com ensaio de queda.</span>}
+              </div>
+              <div className="field"><label htmlFor="nm">Nome do design</label><input id="nm" className="input" value={name} maxLength={60} onChange={e => setName(e.target.value)} /></div>
+              <div className="row"><button className="key key-line key-sm" onClick={downloadSTL}><Icon n="download" size={20} />Descarregar STL</button>{!user && <span className="hint">Para comprar, <Link to="/entrar?voltar=/configurar">entra na tua conta</Link>.</span>}</div>
+            </>}
           </div>
-          <div className="field"><label htmlFor="dh">Altura de queda de projeto</label><div className="row"><input id="dh" className="knurl" type="range" min="0.5" max="2" step="0.1" value={S.dropH} onChange={e => set({ dropH: +e.target.value })} style={{ flex: 1 }} /><LCD value={fmt(S.dropH)} unit="m" /></div></div>
-          {phys && <div className="grid2" style={{ gap: 10 }}>
-            <div className="field"><span className="lbl">Canto</span><LCD value={fmt(phys.tCorner, 2)} unit="mm" /></div>
-            <div className="field"><span className="lbl">Energia a absorver</span><LCD value={fmt(phys.Ereq, 2)} unit="J" /></div>
-            <div className="field" style={{ gridColumn: '1/-1' }}><span className="lbl">Pico de desaceleração no canto · G = η·h / s</span>
-              <div className="gauge"><div className="row" style={{ justifyContent: 'space-between' }}><span className="hint">com capa</span><span className="mono">{phys.G.toLocaleString('pt-PT')} g</span></div><div className="gauge-bar"><i style={{ width: `${100 * phys.G / phys.Gbare}%` }} /></div>
-                <div className="row" style={{ justifyContent: 'space-between' }}><span className="hint">sem capa</span><span className="mono">{phys.Gbare.toLocaleString('pt-PT')} g</span></div><div className="gauge-bar"><i className="bad" style={{ width: '100%' }} /></div></div>
+        </div>
+        <div className="st-foot">
+          <div className="st-price"><span>{phone.name}</span><b>{eur(price)}</b></div>
+          <span className="spacer" />
+          {S.step > 0 && <button className="key key-ghost key-icon" onClick={() => go(S.step - 1)} aria-label="Passo anterior"><Icon n="arrow_back" /></button>}
+          {S.step < 4
+            ? <button className="key key-dark" onClick={() => go(S.step + 1)}>{S.step === 3 && !S.measured ? 'Saltar' : 'Continuar'}<Icon n="arrow_forward" size={20} /></button>
+            : <button className="key key-dark" onClick={saveAndCart} disabled={saving}><Icon n="shopping_bag" size={20} />{saving ? 'A guardar…' : <>Adicionar<span className="wide-only"> ao carrinho</span></>}</button>}
+        </div>
+      </aside>
+
+      {welcome && (
+        <div className="welcome">
+          <div className="welcome-card">
+            <span style={{ width: 64, height: 64, borderRadius: 20, background: 'var(--blue-t)', display: 'grid', placeItems: 'center', color: 'var(--blue)' }}><Icon n="front_hand" size={36} /></span>
+            <h1>Vamos criar a tua DÍGITO</h1>
+            <p>Cinco passos, cerca de três minutos. A capa à tua volta muda a cada escolha que fazes.</p>
+            <div className="welcome-steps">{STEPS.map((t, i) => <span key={t} className="tagpill" style={{ background: 'var(--surface)' }}>{i + 1}. {t}</span>)}</div>
+            <div className="row" style={{ justifyContent: 'center' }}>
+              <button className="key key-dark key-lg" onClick={() => { setWelcome(false); set({ started: true, step: 0 }); }}>Começar</button>
+              {S.maxStep > 0 && <button className="key key-alu key-lg" onClick={() => { setWelcome(false); set({ started: true }); }}>Continuar onde fiquei</button>}
             </div>
-            <p className="note" style={{ gridColumn: '1/-1' }}>Modelo analítico de absorvedor ideal: curso de esmagamento {fmt(phys.stroke, 2)} mm (canto × ε<sub>D</sub>). Indicativo; a validar com ensaio de queda.</p>
-          </div>}
-          <div className="field"><label htmlFor="nm">Nome do design</label><input id="nm" className="input" value={name} maxLength={60} onChange={e => setName(e.target.value)} /></div>
-          <div className="row">
-            <button className="key key-brass key-lg" style={{ flex: 1 }} onClick={saveAndCart} disabled={saving}>{saving ? 'A guardar…' : `Adicionar ao carrinho · ${eur(price)}`}</button>
-          </div>
-          <div className="row"><button className="key key-alu key-sm" onClick={downloadSTL}>Descarregar STL (.zip)</button>{!user && <span className="hint">Para comprar, <Link to="/entrar?voltar=/configurar">entra na tua conta</Link>.</span>}</div>
-        </section>}
-
-        <div className="cfg-foot graphite">
-          <span className="mono" style={{ fontSize: 12, color: '#BDB9B1' }}>{phone.name}<br />{E.STYLES[S.style].name}</span>
-          <div className="row">
-            <button className="key key-dark key-sm" disabled={S.step === 0} onClick={() => go(S.step - 1)}>Voltar</button>
-            {S.step < 4 && <button className="key key-brass key-sm" onClick={() => go(S.step + 1)}>{S.step === 3 && !S.measured ? 'Saltar' : 'Seguinte'}</button>}
           </div>
         </div>
-      </Plate>
+      )}
     </div>
   );
 }

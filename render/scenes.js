@@ -191,9 +191,9 @@ SC.generate = () => {
 // ---- fotografias de produto ----
 SC.product = () => {
   const kind = q.get('kind');
-  S.background = new THREE.Color('#d9d5ce'); renderer.toneMappingExposure = 1.05;
+  S.background = new THREE.Color('#ffffff'); renderer.toneMappingExposure = 1.1;
   const key = lights(1.05); key.shadow.radius = 10;
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshStandardMaterial({ color: '#d9d5ce', roughness: 0.9 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.ShadowMaterial({ opacity: 0.16 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
   const hand = E.estimateHand({ heightCm: 176 }), ph = E.PHONES.IPHONE_16_PRO, socks = E.sockets(hand, ph, 'FULL_4_FINGER'), imp = E.impact({ phone: ph, h: 1.2 });
   const pet = new THREE.MeshStandardMaterial({ color: '#2f3135', roughness: 0.6, metalness: 0.05, envMapIntensity: 0.6 });
   const pa = new THREE.MeshStandardMaterial({ color: '#4b4c4f', roughness: 0.95, envMapIntensity: 0.5 });
@@ -201,11 +201,11 @@ SC.product = () => {
   const tpu = new THREE.MeshPhysicalMaterial({ color: '#202225', roughness: 0.85, sheen: 0.5, sheenColor: new THREE.Color('#44474c'), envMapIntensity: 0.5 });
   const add = (geoms, m, pos, rot) => { const g = new THREE.Group(); geoms.forEach(x => { const me = new THREE.Mesh(x, m); me.castShadow = true; me.receiveShadow = true; g.add(me); }); g.position.set(...pos); g.rotation.set(...rot); S.add(g); return g; };
   const grip = (type, i = 0) => G.gripParts({ ...socks[i], theta: 0 }, type, 'FDM_PETG_CF').parts;
-  if (kind === 'capa') { const b = G.build({ phone: ph, socks, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner }); add(b.caseParts, tpu, [0, 10, 0], [-Math.PI / 2 + 0.0, 0, 0.35]); b.grips.slice(0, 2).forEach((gr, i) => add(gr.parts, pet, [70 + i * 22, G.consts.PLUG_H, 40 - i * 30], [-Math.PI / 2, 0, 0.4])); cam.position.set(80, 230, 200); cam.lookAt(10, 0, 0); }
-  if (kind === 'sela') { [0, 1, 2, 3].forEach(i => add(grip('sela', i), pet, [-36 + i * 24, G.consts.PLUG_H, (i % 2) * 10 - 5], [-Math.PI / 2, 0, Math.PI / 2 + 0.25])); cam.position.set(18, 120, 112); cam.lookAt(0, 4, 0); }
+  if (kind === 'capa') { const b = G.build({ phone: ph, socks, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner }); add(b.caseParts, tpu, [0, 10, 0], [-Math.PI / 2 + 0.0, 0, 0.35]); b.grips.slice(0, 2).forEach((gr, i) => add(gr.parts, pet, [70 + i * 22, G.consts.PLUG_H, 40 - i * 30], [-Math.PI / 2, 0, 0.4])); cam.position.set(70, 300, 250); cam.lookAt(18, 0, 0); }
+  if (kind === 'sela') { [0, 1, 2, 3].forEach(i => add(grip('sela', i), pet, [-36 + i * 24, G.consts.PLUG_H, (i % 2) * 10 - 5], [-Math.PI / 2, 0, Math.PI / 2 + 0.25])); cam.position.set(16, 160, 150); cam.lookAt(0, 4, 0); }
   if (kind === 'anel') { add(grip('ring', 1), pa, [0, G.consts.PLUG_H, 0], [-Math.PI / 2, 0, -0.9]); cam.position.set(52, 34, 46); cam.lookAt(0, 13, 0); }
   if (kind === 'tampa') { [0, 1, 2, 3].forEach(i => add(grip('blank'), pet, [-21 + i * 14, G.consts.PLUG_H, (i % 2) * 6], [i % 2 ? Math.PI / 2 : -Math.PI / 2, 0, i * 0.5])); cam.position.set(10, 62, 78); cam.lookAt(0, 1, 0); }
-  if (kind === 'imanes') { const nm = new THREE.MeshPhysicalMaterial({ color: '#8f9499', roughness: 0.22, metalness: 1, envMapIntensity: 0.7 }); for (let i = 0; i < 8; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 2, 48), nm); c.castShadow = true; c.position.set(-12 + (i % 4) * 8, 1 + (i > 5 ? 2 : 0), i < 4 ? -5 : 5); if (i > 5) c.position.x = -2 + (i - 6) * 7; S.add(c); } cam.position.set(16, 34, 40); cam.lookAt(0, 1, 0); }
+  if (kind === 'imanes') { const nm = new THREE.MeshPhysicalMaterial({ color: '#8f9499', roughness: 0.22, metalness: 1, envMapIntensity: 0.7 }); for (let i = 0; i < 8; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 2, 48), nm); c.castShadow = true; c.position.set(-12 + (i % 4) * 8, 1 + (i > 5 ? 2 : 0), i < 4 ? -5 : 5); if (i > 5) c.position.x = -2 + (i - 6) * 7; S.add(c); } cam.position.set(18, 46, 56); cam.lookAt(0, 1, 0); }
   if (kind === 'titanio') { add(grip('sela', 1), ti, [0, G.consts.PLUG_H, 0], [-Math.PI / 2, 0, 0.5]); cam.position.set(32, 34, 46); cam.lookAt(0, 5, 0); }
   return () => {};
 };
