@@ -80,7 +80,11 @@ function Designs() {
 }
 function Orders() {
   const { user } = useAuth(); const [rows, setRows] = useState(null);
-  useEffect(() => { supabase.from('orders').select('*, items:order_items(*)').eq('buyer_id', user.id).order('created_at', { ascending: false }).then(({ data }) => setRows(data || [])); }, [user.id]);
+  useEffect(() => {
+    const load = () => supabase.from('orders').select('*, items:order_items(*)').eq('buyer_id', user.id).order('created_at', { ascending: false }).then(({ data }) => { setRows(data || []); return data || []; });
+    // pede ao servidor que confirme na Stripe as encomendas ainda pendentes (complementa o webhook)
+    load().then(d => { if (d.some(o => o.status === 'pendente' && o.stripe_session_id)) supabase.functions.invoke('confirm-order', { body: {} }).then(load).catch(() => {}); });
+  }, [user.id]);
   if (!rows) return <Spinner />;
   return (
     <div style={{ display: 'grid', gap: 18 }}>

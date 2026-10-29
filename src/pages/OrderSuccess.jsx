@@ -9,7 +9,7 @@ export default function OrderSuccess() {
   useEffect(() => { cart.clear(); }, []); // eslint-disable-line
   useEffect(() => {
     if (!id) return; let n = 0, t;
-    const poll = async () => { const { data } = await supabase.from('orders').select('*, items:order_items(*)').eq('id', id).maybeSingle(); setO(data); if (data && data.status === 'pendente' && n++ < 10) t = setTimeout(poll, 2000); };
+    const poll = async () => { if (n === 0 || n % 2 === 0) await supabase.functions.invoke('confirm-order', { body: { order_id: id } }).catch(() => {}); const { data } = await supabase.from('orders').select('*, items:order_items(*)').eq('id', id).maybeSingle(); setO(data); if (data && data.status === 'pendente' && n++ < 10) t = setTimeout(poll, 2000); };
     poll(); return () => clearTimeout(t);
   }, [id]);
   return (
