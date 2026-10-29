@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { designPrice, SHIPPING, FREE_SHIPPING_FROM } from "./pricing.ts";
+import { designPrice, SHIPPING, FREE_SHIPPING_FROM, TERMS_VERSION } from "./pricing.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -23,10 +23,13 @@ Deno.serve(async (req) => {
   const { data: { user }, error: uerr } = await admin.auth.getUser(token);
   if (uerr || !user) return json({ error: "not_signed_in" }, 401);
 
-  let body: { items?: Item[]; shipping?: string; address?: Record<string, string>; origin?: string };
+  let body: { items?: Item[]; shipping?: string; address?: Record<string, string>; origin?: string; terms?: string; custom_ack?: boolean };
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
   const items = (body.items || []).slice(0, 30);
   if (!items.length) return json({ error: "empty_cart" }, 400);
+  if (body.terms !== TERMS_VERSION) return json({ error: "terms_required", message: "É preciso aceitar os Termos de venda em vigor." }, 400);
+  const hasCustom = items.some((i) => i.design_id);
+  if (hasCustom && body.custom_ack !== true) return json({ error: "custom_ack_required", message: "Confirma que sabes que os produtos à medida não têm direito de livre resolução." }, 400);
   const ship = SHIPPING[body.shipping || "pickup"] ? (body.shipping || "pickup") : "pickup";
 
   const allowed = (Deno.env.get("SITE_URLS") || "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -57,7 +60,7 @@ Deno.serve(async (req) => {
 
   const { data: order, error: oerr } = await admin.from("orders").insert({
     buyer_id: user.id, total_cents: subtotal + shippingCents, shipping_cents: shippingCents,
-    shipping: { method: ship, ...(body.address || {}) },
+    shipping: { method: ship, ...(body.address || {}), terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString(), custom_ack: hasCustom },
   }).select().single();
   if (oerr) return json({ error: "order_failed", message: oerr.message }, 500);
   const { error: ierr } = await admin.from("order_items").insert(lines.map((l) => ({
@@ -66,7 +69,7 @@ Deno.serve(async (req) => {
   })));
   if (ierr) return json({ error: "order_items_failed", message: ierr.message }, 500);
 
-  // Stripe Checkout via REST. Os métodos de pagamento (cartão, MB WAY, …) vêm das definições do Dashboard.
+  // Stripe Checkout via REST (form-encoded)
   const f = new URLSearchParams();
   f.set("mode", "payment");
   f.set("success_url", `${origin}/encomenda/sucesso?order=${order.id}&session_id={CHECKOUT_SESSION_ID}`);

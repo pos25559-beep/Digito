@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as THREE from 'three';
-import { supabase, BASE, img } from '../lib/supabase.js';
+import { supabase, BASE, img, CATEGORY_PT } from '../lib/supabase.js';
 import * as E from '../lib/engine.js';
 import * as G from '../lib/geometry.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
@@ -80,7 +80,7 @@ function Lab() {
           <div className="ro"><span>Entre encaixes</span><b>{fmt(d.gap || 22, 1)}<small>mm</small></b></div>
           <div className="ro"><span>Volume das pegas</span><b>{fmt(d.vol || 5, 2)}<small>cm³</small></b></div>
         </div>
-        <Link to="/configurar" className="key key-dark" style={{ justifySelf: 'start' }}>Configurar com as minhas medidas <Icon n="arrow_forward" size={20} /></Link>
+        <Link to="/configurar" className="key key-dark lab-cta">Configurar com as minhas medidas <Icon n="arrow_forward" size={20} /></Link>
       </div>
     </div>
   );
@@ -170,9 +170,13 @@ export default function Home() {
         <div className="cards4">
           {listings.map((l, i) => (
             <Link key={l.id} to={`/loja/${l.slug}`} className={`pcard ${COLORS[i % 4]} reveal`}>
-              <div className="pc-top"><span className="tagpill"><Icon n="sell" size={16} />{eur(l.price_cents)}</span><Icon n="add" className="pc-plus" /></div>
+              <div className="pc-top"><span className="pc-cat">{CATEGORY_PT[l.category]}{l.process ? ` · ${l.process}` : ''}</span><span className="pc-go"><Icon n="arrow_forward" size={20} /></span></div>
               {l.images?.[0] ? <img src={img(l.images[0])} alt="" loading="lazy" /> : <span />}
-              <p>{l.title}. {l.summary}</p>
+              <div className="pc-text">
+                <h3>{l.title}</h3>
+                {l.summary && <p>{l.summary}</p>}
+                <span className="pc-price">{eur(l.price_cents)}</span>
+              </div>
             </Link>
           ))}
         </div>

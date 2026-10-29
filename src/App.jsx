@@ -14,7 +14,10 @@ const Account = lazy(() => import('./pages/Account.jsx'));
 const Seller = lazy(() => import('./pages/Seller.jsx'));
 const PublicProfile = lazy(() => import('./pages/PublicProfile.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
-const TITLES = { '/': 'DÍGITO — capas e pegas à medida dos teus dedos', '/loja': 'Loja · DÍGITO', '/configurar': 'Configurar · DÍGITO', '/carrinho': 'Carrinho · DÍGITO', '/entrar': 'Entrar · DÍGITO', '/vender': 'Vender · DÍGITO' };
+const Terms = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Terms })));
+const Privacy = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Privacy })));
+const Help = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Help })));
+const TITLES = { '/': 'DÍGITO — capas e pegas à medida dos teus dedos', '/loja': 'Loja · DÍGITO', '/configurar': 'Configurar · DÍGITO', '/carrinho': 'Carrinho · DÍGITO', '/entrar': 'Entrar · DÍGITO', '/vender': 'Vender · DÍGITO', '/termos': 'Termos de venda · DÍGITO', '/privacidade': 'Privacidade · DÍGITO', '/ajuda': 'Ajuda e contacto · DÍGITO' };
 export default function App() {
   const loc = useLocation();
   useEffect(() => { if (!loc.hash) window.scrollTo(0, 0); document.title = TITLES[loc.pathname] || 'DÍGITO'; }, [loc.pathname]); // eslint-disable-line
@@ -38,6 +41,9 @@ export default function App() {
             <Route path="/vender" element={<Seller />} />
             <Route path="/vender/:tab" element={<Seller />} />
             <Route path="/u/:username" element={<PublicProfile />} />
+            <Route path="/termos" element={<Terms />} />
+            <Route path="/privacidade" element={<Privacy />} />
+            <Route path="/ajuda" element={<Help />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

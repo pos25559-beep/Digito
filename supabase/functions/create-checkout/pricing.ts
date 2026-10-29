@@ -18,3 +18,5 @@ export function designPrice(grips: Array<{ type: string }>, material: string): n
   }
   return total;
 }
+
+export const TERMS_VERSION = "2026-10-29";
