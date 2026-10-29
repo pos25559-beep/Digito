@@ -1,0 +1,8 @@
+<!doctype html><html><body><canvas id="c"></canvas><script src="/public/mp/hands.js"></script><script>
+(async()=>{const im=new Image();im.src='hands_src.jpg';await im.decode();const c=document.getElementById('c');
+// mão esquerda da imagem (recorte 0..370)
+c.width=370*3;c.height=382*3;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,370,382,0,0,c.width,c.height);
+const h=new Hands({locateFile:f=>'/public/mp/'+f});h.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.3,selfieMode:false});
+h.onResults(r=>{window.LM=(r.multiHandLandmarks&&r.multiHandLandmarks[0]||[]).map(p=>[p.x*c.width,p.y*c.height]);window.done=true;});
+await h.initialize();await h.send({image:c});})().catch(e=>{window.ERR=String(e);window.done=true});
+</script></body></html>
