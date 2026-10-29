@@ -6,6 +6,7 @@ import * as E from '../lib/engine.js';
 import * as G from '../lib/geometry.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
 import { fmt, eur } from '../lib/pricing.js';
+import { HIGHLIGHTS } from '../lib/why.js';
 import { Icon, Range, useReveal } from '../components/ui.jsx';
 
 const V = f => `${BASE}/video/${f}`;
@@ -123,6 +124,7 @@ export default function Home() {
           <a className="chip-link" href="#medir"><Icon n="photo_camera" />Medir</a>
           <a className="chip-link" href="#gerar"><Icon n="view_in_ar" />Gerar</a>
           <a className="chip-link" href="#imprimir"><Icon n="precision_manufacturing" />Imprimir</a>
+          <a className="chip-link" href="#porque"><Icon n="lightbulb" />Porquê</a>
           <a className="chip-link" href="#laboratorio"><Icon n="3d_rotation" />Experimentar</a>
           <Link className="chip-link" to="/loja"><Icon n="storefront" />Loja</Link>
         </nav>
@@ -157,6 +159,21 @@ export default function Home() {
           </div>
         </section>
       </div>
+
+      <section className="wrap why-band" id="porque">
+        <div className="band-head reveal"><span className="why-kicker">Porque existe a DÍGITO</span><h2>Uma mão média não serve a todos</h2><p>Para muitos, um telemóvel difícil de segurar é só um incómodo. Para quem tem tremor, artrose ou pouca força, é uma barreira. O que dizem os dados:</p></div>
+        <div className="hl-grid">
+          {HIGHLIGHTS.map(h => (
+            <Link key={h.big} to={`/porque#${h.anchor}`} className={`hl-card ${h.color} reveal`}>
+              <span className="hl-area">{h.area}</span>
+              <b>{h.big}</b>
+              <p>{h.text}</p>
+              <span className="hl-src">{h.short}</span>
+            </Link>
+          ))}
+        </div>
+        <div className="row" style={{ justifyContent: 'center', marginTop: 40 }}><Link className="key key-dark key-lg" to="/porque">Ler a análise completa <Icon n="arrow_forward" size={20} /></Link></div>
+      </section>
 
       <section className="band" id="laboratorio">
         <div className="wrap">

@@ -14,8 +14,10 @@ export default function Nav() {
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Principal" onClick={() => setOpen(false)}>
           <NavLink to="/" end>Visão geral</NavLink>
           <NavLink to="/loja">Loja</NavLink>
-          <NavLink to="/configurar">Configurar</NavLink>
+          <NavLink to="/porque">Porquê</NavLink>
           <NavLink to="/vender">Vender</NavLink>
+          <NavLink to="/configurar" className="only-menu">Configurar a capa</NavLink>
+          {!user && <NavLink to="/entrar" className="only-menu">Entrar</NavLink>}
         </nav>
         <div className="nav-act">
           <Link to="/carrinho" className="key key-ghost key-icon cart-btn" aria-label={`Carrinho, ${count} artigos`} style={{ color: 'var(--ink-2)' }}>
