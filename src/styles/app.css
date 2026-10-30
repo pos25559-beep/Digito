@@ -689,8 +689,8 @@ footer.foot { background: var(--surface); padding-block: 48px calc(32px + env(sa
 /* ligações no meio do texto: sublinhadas, não só pela cor (WCAG 1.4.1) */
 :where(p, li, td, dd, .hint, .note, label, figcaption) a:not(.key):not(.chip-link) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; color: var(--blue-h); }
 :where(p, li, td, dd, .hint, .note, label) a:not(.key):hover { text-decoration-thickness: 2px; }
-/* herói: a ilustração tem legendas próprias, nunca se corta */
-.hero-media.art img { object-fit: contain; object-position: 50% 50%; }
+/* herói: fotografia real a toda a altura */
+.hero-media.art img { object-fit: cover; }
 @media (max-width: 900px) { .hero-media.art { min-height: 0; aspect-ratio: 4 / 3; } }
 /* preços sempre na mesma letra */
 .price { font-family: var(--f); font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -811,7 +811,7 @@ details.more .pk { margin-top: 8px; width: 100%; }
 .photo { position: relative; margin: 0; overflow: hidden; background: var(--surface-2); }
 .photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .photo-credit { position: absolute; right: 10px; bottom: 10px; font-size: 11px; line-height: 1; padding: 6px 9px; border-radius: var(--r-pill); background: rgba(32,33,36,.62); color: #fff; backdrop-filter: blur(6px); }
-.photo-credit a { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+.photo-credit a { color: #fff !important; text-decoration: underline; text-underline-offset: 2px; }
 .hero-media.art .photo { position: absolute; inset: 0; }
 .need .photo { aspect-ratio: 4 / 3; }
 .contigo-art .photo, .custom-hero-art .photo { aspect-ratio: 4 / 3; }
