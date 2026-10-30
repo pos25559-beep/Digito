@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { photoUrl, photoSrcSet, authorUrl, unsplashUrl } from '../lib/photos.js';
 export const Screws = () => null;
 export function Plate({ as: Tag = 'div', screws, pad, className = '', children, ...rest }) {
   return <Tag className={`plate ${pad ? 'pad' : ''} ${className}`} {...rest}>{children}</Tag>;
@@ -54,3 +55,25 @@ export function useReveal() {
 
 /** o utilizador pediu menos movimento no sistema */
 export const reducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** vídeo sem som que só corre quando está visível; com movimento reduzido fica parado e com controlos */
+export function AutoVideo({ src, poster, label }) {
+  const ref = useRef();
+  const still = reducedMotion();
+  useEffect(() => {
+    const el = ref.current; if (!el || still) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) el.play().catch(() => {}); else el.pause(); }, { threshold: 0.25 });
+    io.observe(el); return () => io.disconnect();
+  }, []);
+  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} controls={still} />;
+}
+
+/** fotografia real (Unsplash) com crédito visível ao autor */
+export function Photo({ p, ratio, sizes = '(max-width: 900px) 100vw, 50vw', eager, className = '' }) {
+  return (
+    <figure className={`photo ${className}`}>
+      <img src={photoUrl(p, 1200, ratio ? Math.round(1200 / ratio) : 0)} srcSet={photoSrcSet(p, ratio)} sizes={sizes} alt={p.alt} loading={eager ? 'eager' : 'lazy'} decoding="async" style={{ objectPosition: p.pos }} />
+      <figcaption className="photo-credit">Foto: <a href={authorUrl(p)} target="_blank" rel="noreferrer">{p.author}</a> / <a href={unsplashUrl} target="_blank" rel="noreferrer">Unsplash</a></figcaption>
+    </figure>
+  );
+}

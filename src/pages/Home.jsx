@@ -7,20 +7,10 @@ import * as G from '../lib/geometry.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
 import { fmt, eur } from '../lib/pricing.js';
 import { HIGHLIGHTS } from '../lib/why.js';
-import { Icon, Range, useReveal, reducedMotion } from '../components/ui.jsx';
+import { Icon, Range, useReveal, reducedMotion, AutoVideo, Photo } from '../components/ui.jsx';
+import { PHOTOS } from '../lib/photos.js';
 
 const V = f => `${BASE}/video/${f}`;
-
-function AutoVideo({ src, poster, label }) {
-  const ref = useRef();
-  const still = reducedMotion();
-  useEffect(() => {
-    const el = ref.current; if (!el || still) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) el.play().catch(() => {}); else el.pause(); }, { threshold: 0.25 });
-    io.observe(el); return () => io.disconnect();
-  }, []);
-  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} controls={still} />;
-}
 
 function Lab() {
   const cv = useRef(); const view = useRef(); const [w, setW] = useState(19.2); const [style, setStyle] = useState('FULL_4_FINGER'); const [d, setD] = useState({});
@@ -71,15 +61,15 @@ function Lab() {
 }
 
 const MATS = [
-  { name: 'TPU 95A', proc: 'FDM · capa', dot: 'radial-gradient(circle at 35% 30%, #5a5c61, #1b1c1f 70%)', E: '65 MPa', rho: '1,22 g/cm³', c: '0,25 mm', note: 'Elástico. Absorve a queda nos cantos.' },
+  { name: 'TPU 95A', proc: 'FDM · capa', dot: 'radial-gradient(circle at 35% 30%, #5a5c61, #1b1c1f 70%)', E: '9–26 MPa', rho: '1,22 g/cm³', c: '0,25 mm', note: 'Elástico. Absorve a queda nos cantos.' },
   { name: 'PETG-CF', proc: 'FDM · pegas', dot: 'repeating-linear-gradient(45deg,#2b2d31 0 2px,#3a3d42 2px 4px)', E: '3,8 GPa', rho: '1,29 g/cm³', c: '0,20 mm', note: 'Rígido e mate, com fibra de carbono.' },
   { name: 'Tough 2000', proc: 'SLA · pegas', dot: 'radial-gradient(circle at 35% 30%, #6b7484, #2d3440 70%)', E: '2,2 GPa', rho: '1,18 g/cm³', c: '0,08 mm', note: 'Resina tenaz, acabamento liso e tolerância fina.' },
   { name: 'Ti6Al4V', proc: 'SLM · edição', dot: 'linear-gradient(135deg,#e4e6e9,#8e9298 45%,#cfd2d6 60%,#7c8086)', E: '110 GPa', rho: '4,43 g/cm³', c: '0,10 mm', note: 'Titânio grau 5, fundido a laser.' }
 ];
 const COLORS = ['c-red', 'c-blue', 'c-violet', 'c-green'];
 const NEEDS = [
-  { img: 'estabilidade', tag: 'Anel', c: 'c-violet', t: 'Quando a mão treme', d: 'O anel prende o telemóvel a um dedo. Se a mão treme ou perde força por um instante, o telemóvel fica onde está.', alt: 'Uma linha que treme passa por um anel azul e sai direita.' },
-  { img: 'apoio', tag: 'Sela', c: 'c-red', t: 'Quando os dedos doem', d: 'Cada sela tem o raio do teu dedo e apoia-o em toda a largura, para segurares sem teres de apertar uma superfície lisa.', alt: 'Um dedo com três falanges apoiado em duas selas azuis.' },
+  { img: 'treme', tag: 'Anel', c: 'c-violet', t: 'Quando a mão treme', d: 'O anel prende o telemóvel a um dedo. Se a mão treme ou perde força por um instante, o telemóvel fica onde está.', alt: 'Uma linha que treme passa por um anel azul e sai direita.' },
+  { img: 'dor', tag: 'Sela', c: 'c-red', t: 'Quando os dedos doem', d: 'Cada sela tem o raio do teu dedo e apoia-o em toda a largura, para segurares sem teres de apertar uma superfície lisa.', alt: 'Um dedo com três falanges apoiado em duas selas azuis.' },
   { img: 'forca', tag: 'Prateleira', c: 'c-green', t: 'Quando falta força', d: 'O mindinho por baixo funciona como prateleira e sustenta o peso. Os outros dedos só têm de equilibrar.', alt: 'Telemóvel apoiado por baixo numa prateleira azul, o mindinho.' },
 ];
 
@@ -103,7 +93,7 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-media art">
-          <img src={`${BASE}/ilustracoes/hero.webp`} alt="Costas de um telemóvel com quatro dedos apoiados em pegas, cada um com a sua largura medida: 18,4, 19,2, 17,8 e 15,1 milímetros." width="1500" height="1725" />
+          <Photo p={PHOTOS.hero} eager sizes="(max-width: 900px) 100vw, 55vw" />
         </div>
       </section>
 
@@ -111,6 +101,7 @@ export default function Home() {
         <nav className="chips-bar" aria-label="Secções">
           <a className="chip-link" href="#para-quem"><Icon n="back_hand" />Para quem</a>
           <a className="chip-link" href="#medir"><Icon n="photo_camera" />Como funciona</a>
+          <a className="chip-link" href="#encaixe"><Icon n="lock" />O encaixe</a>
           <a className="chip-link" href="#feito-contigo"><Icon n="forum" />Feito contigo</a>
           <a className="chip-link" href="#porque"><Icon n="lightbulb" />Porquê</a>
           <a className="chip-link" href="#laboratorio"><Icon n="3d_rotation" />Experimentar</a>
@@ -124,7 +115,7 @@ export default function Home() {
         <div className="needs-grid">
           {NEEDS.map(n => (
             <article key={n.t} className="need reveal">
-              <img src={`${BASE}/ilustracoes/${n.img}.webp`} alt={n.alt} loading="lazy" width="1800" height="1350" />
+              <Photo p={PHOTOS[n.img]} ratio={4 / 3} sizes="(max-width: 900px) 100vw, 33vw" />
               <div className="need-b">
                 <span className={`need-tag ${n.c}`}>{n.tag}</span>
                 <h3>{n.t}</h3>
@@ -157,19 +148,37 @@ export default function Home() {
         </section>
 
         <section className="story reveal" id="imprimir">
-          <div className="story-media"><span className="tagpill"><Icon n="precision_manufacturing" />Impressão</span><AutoVideo src={V('print.mp4')} poster={V('print.jpg')} label="Impressão FDM da capa, camada a camada." /></div>
+          <div className="story-media"><span className="tagpill"><Icon n="precision_manufacturing" />Impressão</span><Photo p={PHOTOS.impressao} ratio={16 / 10} /></div>
           <div className="story-copy">
             <span className="story-step"><span className="num">3</span>Imprimir</span>
             <h2>Impressa em 3D, porque não há duas iguais</h2>
-            <p>Uma peça única não justifica um molde. Por isso a capa é impressa em TPU flexível e as pegas em PETG com fibra de carbono, resina tenaz ou titânio. Encaixam sem ferramentas e trocam-se se a tua mão mudar.</p>
+            <p>Uma peça única não justifica um molde. A capa sai em TPU flexível e as pegas em PETG com fibra de carbono, resina tenaz ou titânio. Encaixam sem ferramentas e trocam-se se a tua mão mudar.</p>
             <div className="facts"><div className="fact"><b>Desde 1</b><span>peça por encomenda</span></div><div className="fact"><b>Sem</b><span>moldes nem stock</span></div></div>
           </div>
         </section>
       </div>
 
+      <section className="wrap tech-sec" id="encaixe">
+        <div className="lock-band">
+          <div className="tech-hero-media reveal"><AutoVideo src={`${BASE}/motion/lock.mp4`} poster={`${BASE}/motion/lock.jpg`} label="Animação em corte do DÍGITO Lock: a pega desce, roda 60 graus e fica presa por três patilhas debaixo do lábio do insert." /></div>
+          <div className="lock-copy reveal">
+            <span className="why-kicker">Tecnologia · DÍGITO Lock</span>
+            <h2>Uma pega que não cai do nada</h2>
+            <p>Para quem apoia o peso do telemóvel nas pegas, o encaixe não pode falhar. A nova baioneta prende cada pega com três patilhas: empurras, rodas 60° e ouves o clique. Puxar não a solta, e não tem peças móveis.</p>
+            <div className="lock-facts">
+              <div><b>~30×</b><span>mais força para arrancar a pega do que com ímanes</span></div>
+              <div><b>2×</b><span>margem no caso de projeto</span></div>
+              <div><b>0</b><span>peças móveis</span></div>
+            </div>
+            <p className="hint"><Icon n="science" size={16} /> Em validação: os protótipos estão a ser ensaiados.</p>
+            <Link className="key key-dark key-lg" to="/tecnologia">Ver como funciona <Icon n="arrow_forward" size={20} /></Link>
+          </div>
+        </div>
+      </section>
+
       <section className="band contigo" id="feito-contigo">
         <div className="wrap contigo-in">
-          <figure className="contigo-art reveal"><img src={`${BASE}/ilustracoes/contigo.webp`} alt="Quatro etapas: escreves, falamos, medimos, fazemos." loading="lazy" width="1800" height="1350" /></figure>
+          <div className="contigo-art reveal"><Photo p={PHOTOS.contigo} ratio={4 / 3} /></div>
           <div className="contigo-copy reveal">
             <span className="why-kicker">Feito contigo</span>
             <h2>E se o padrão não servir?</h2>

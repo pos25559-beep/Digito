@@ -1,35 +1,35 @@
 <!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}</style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612+Mono&display=swap"></head><body><canvas id="c"></canvas><script>
+</head><body><canvas id="c"></canvas><script>
 const q=new URLSearchParams(location.search),W=+q.get('w')||1920,H=+q.get('h')||1080,FR=+q.get('frames')||300;
 const c=document.getElementById('c');c.width=W;c.height=H;const x=c.getContext('2d');
 let D;fetch('hand.json').then(r=>r.json()).then(d=>{D=d;window.ready=true;});
 const FN={index:'INDICADOR',middle:'MÉDIO',ring:'ANELAR',pinky:'MINDINHO'};
 const BONES=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
 const cl=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),ease=t=>1-Math.pow(1-cl(t),3);
-const F='"B612 Mono", monospace';
-function lcd(px,py,txt,w=150){x.save();x.fillStyle='#1c1d20';x.beginPath();x.roundRect(px-6,py-6,w+12,50,10);x.fill();const g=x.createLinearGradient(0,py,0,py+38);g.addColorStop(0,'#A3AC8E');g.addColorStop(1,'#C4CBB1');x.fillStyle=g;x.beginPath();x.roundRect(px,py,w,38,6);x.fill();x.fillStyle='#1E2418';x.font=`26px ${F}`;x.textAlign='right';x.fillText(txt,px+w-12,py+29);x.restore();}
+const F='Inter, sans-serif';
+function lcd(px,py,txt,w=150,on=false){x.save();x.fillStyle=on?'#E8F0FE':'#FFFFFF';x.strokeStyle=on?'#1A73E8':'#DADCE0';x.lineWidth=1.5;x.beginPath();x.roundRect(px,py-4,w,46,23);x.fill();x.stroke();x.fillStyle=on?'#174EA6':'#80868B';x.font=`500 24px ${F}`;x.textAlign='center';x.fillText(txt,px+w/2,py+27);x.restore();}
 window.renderFrame=f=>{
   const t=(f/FR)*10; // segundos
-  x.fillStyle='#141517';x.fillRect(0,0,W,H);
+  x.fillStyle='#F8F9FA';x.fillRect(0,0,W,H);
   // tapete de corte
-  x.strokeStyle='rgba(255,255,255,.035)';x.lineWidth=1;for(let i=0;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke();}for(let i=0;i<H;i+=40){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke();}
+  x.strokeStyle='rgba(32,33,36,.045)';x.lineWidth=1;for(let i=0;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke();}for(let i=0;i<H;i+=40){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke();}
   const s=0.86*H/D.h, ox=W*0.08, oy=H*0.07; x.save();x.translate(ox,oy);x.scale(s,s);
   // contorno da mão a desenhar-se
-  const n=Math.floor(ease(t/1.8)*D.outline.length);x.strokeStyle='#E9E5DD';x.lineWidth=2.2/s;x.beginPath();for(let i=0;i<n;i++){const p=D.outline[i];i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);}x.stroke();
-  if(t>1.8){x.globalAlpha=cl((t-1.8)/0.8)*0.06;x.fillStyle='#E9E5DD';x.beginPath();D.outline.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();x.fill();x.globalAlpha=1;}
+  const n=Math.floor(ease(t/1.8)*D.outline.length);x.strokeStyle='#3C4043';x.lineWidth=2.2/s;x.beginPath();for(let i=0;i<n;i++){const p=D.outline[i];i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);}x.stroke();
+  if(t>1.8){x.globalAlpha=cl((t-1.8)/0.8)*0.06;x.fillStyle='#3C4043';x.beginPath();D.outline.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();x.fill();x.globalAlpha=1;}
   // ossos e pontos
-  BONES.forEach(([a,b],i)=>{const k=cl((t-2.2-i*0.06)/0.35);if(k<=0)return;const A=D.lm[a],B=D.lm[b];x.strokeStyle='rgba(233,162,59,.6)';x.lineWidth=1.6/s;x.beginPath();x.moveTo(A[0],A[1]);x.lineTo(A[0]+(B[0]-A[0])*k,A[1]+(B[1]-A[1])*k);x.stroke();});
-  D.lm.forEach((p,i)=>{const k=cl((t-2.0-i*0.07)/0.25);if(k<=0)return;x.fillStyle='#E9A23B';x.beginPath();x.arc(p[0],p[1],(5+3*(1-k))/s*1.4,0,7);x.fill();x.strokeStyle='#141517';x.lineWidth=1.5/s;x.stroke();});
+  BONES.forEach(([a,b],i)=>{const k=cl((t-2.2-i*0.06)/0.35);if(k<=0)return;const A=D.lm[a],B=D.lm[b];x.strokeStyle='rgba(26,115,232,.55)';x.lineWidth=1.6/s;x.beginPath();x.moveTo(A[0],A[1]);x.lineTo(A[0]+(B[0]-A[0])*k,A[1]+(B[1]-A[1])*k);x.stroke();});
+  D.lm.forEach((p,i)=>{const k=cl((t-2.0-i*0.07)/0.25);if(k<=0)return;x.fillStyle='#1A73E8';x.beginPath();x.arc(p[0],p[1],(5+3*(1-k))/s*1.4,0,7);x.fill();x.strokeStyle='#FFFFFF';x.lineWidth=2/s;x.stroke();});
   // réguas
   Object.entries(D.cal).forEach(([f,[a,b,mm]],i)=>{const k=ease((t-4.2-i*0.55)/0.6);if(k<=0)return;const cx=(a[0]+b[0])/2,cy=(a[1]+b[1])/2;const A=[cx+(a[0]-cx)*k,cy+(a[1]-cy)*k],B=[cx+(b[0]-cx)*k,cy+(b[1]-cy)*k];
-    x.strokeStyle='#F4F1EA';x.lineWidth=2.4/s;x.beginPath();x.moveTo(A[0],A[1]);x.lineTo(B[0],B[1]);x.stroke();
+    x.strokeStyle='#202124';x.lineWidth=2.4/s;x.beginPath();x.moveTo(A[0],A[1]);x.lineTo(B[0],B[1]);x.stroke();
     const ux=(b[0]-a[0]),uy=(b[1]-a[1]),L=Math.hypot(ux,uy),nx=-uy/L*9,ny=ux/L*9;[A,B].forEach(P=>{x.beginPath();x.moveTo(P[0]-nx,P[1]-ny);x.lineTo(P[0]+nx,P[1]+ny);x.stroke();});});
   x.restore();
   // painel de leituras
-  const px=W*0.62,py=H*0.14;x.fillStyle='#8E918F';x.font=`16px ${F}`;x.textAlign='left';x.fillText('LARGURA NA ARTICULAÇÃO DO MEIO',px,py-28);
-  Object.entries(D.cal).forEach(([f,[a,b,mm]],i)=>{const k=ease((t-4.2-i*0.55)/0.6);const y=py+i*96;x.fillStyle=k>0?'#E9E5DD':'#55575b';x.font=`20px ${F}`;x.textAlign='left';x.fillText(FN[f],px,y+30);lcd(px+300,y,k>0?(mm*k).toFixed(1).replace('.',',')+' mm':'--,- mm',190);
-    const led=k>=1;x.fillStyle=led?'#3fcf7b':'#3a3024';x.beginPath();x.arc(px+250,y+19,6,0,7);x.fill();if(led){x.fillStyle='rgba(63,207,123,.35)';x.beginPath();x.arc(px+250,y+19,12,0,7);x.fill();}});
-  const k2=cl((t-7.0)/0.6);x.globalAlpha=k2;x.fillStyle='#E9A23B';x.font=`18px ${F}`;x.fillText('21 PONTOS · ESCALA PELO CARTÃO 85,6 MM · NO DISPOSITIVO',px,py+4*96+30);x.globalAlpha=1;
+  const px=W*0.55,py=H*0.16;x.fillStyle='#5F6368';x.font=`600 15px ${F}`;x.textAlign='left';x.fillText('LARGURA NA ARTICULAÇÃO DO MEIO',px,py-28);
+  Object.entries(D.cal).forEach(([f,[a,b,mm]],i)=>{const k=ease((t-4.2-i*0.55)/0.6);const y=py+i*96;x.fillStyle=k>0?'#202124':'#9AA0A6';x.font=`500 22px ${F}`;x.textAlign='left';x.fillText(FN[f],px,y+30);lcd(px+300,y,k>0?(mm*k).toFixed(1).replace('.',',')+' mm':'—',190,k>=1);
+    const led=k>=1;x.fillStyle=led?'#137333':'#DADCE0';x.beginPath();x.arc(px+250,y+19,7,0,7);x.fill();});
+  const k2=cl((t-7.0)/0.6);x.globalAlpha=k2;x.fillStyle='#1A73E8';x.font=`500 17px ${F}`;x.fillText('21 pontos · escala pelo cartão de 85,6 mm · no dispositivo',px,py+4*96+30);x.globalAlpha=1;
   return c.toDataURL('image/jpeg',0.92);
 };
 </script></body></html>

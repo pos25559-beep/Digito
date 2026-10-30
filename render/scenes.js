@@ -141,18 +141,18 @@ SC.hero = () => {
 };
 // ---- impressão da capa ----
 SC.print = () => {
-  S.background = new THREE.Color('#08090b'); S.fog = new THREE.Fog('#08090b', 260, 700); renderer.toneMappingExposure = 1.0;
+  S.background = new THREE.Color('#F8F9FA'); S.fog = new THREE.Fog('#F8F9FA', 300, 760); S.add(new THREE.HemisphereLight(0xffffff, 0xd0d4da, 1.1)); renderer.toneMappingExposure = 1.0;
   lights(1.1);
-  const pr = printer('#15171a'); S.add(pr); const head = pr.userData.head;
+  const pr = printer('#E8EAED'); S.add(pr); const head = pr.userData.head;
   const ph = E.PHONES.IPHONE_16_PRO, hand = E.estimateHand({ heightCm: 172 }), socks = E.sockets(hand, ph, 'PINKY_SHELF'), imp = E.impact({ phone: ph, h: 1.2 });
   const b = G.build({ phone: ph, socks, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner });
   const geomsList = b.caseParts.map(g => { const t = new THREE.Group(); const grp = new THREE.Group(); grp.add(new THREE.Mesh(g)); grp.rotation.x = Math.PI / 2; grp.position.y = G.consts.BACK + G.consts.BOSS_H; const r = new THREE.Group(); r.rotation.y = Math.PI / 2; r.add(grp); t.add(r); return worldGeoms(t); });
   let top = 0; geomsList.flat().forEach(g => { g.computeBoundingBox(); top = Math.max(top, g.boundingBox.max.y); });
   const LH = 0.3, layers = buildLayers(geomsList, LH, top), NL = layers.length;
-  const mat = new THREE.MeshPhysicalMaterial({ color: '#1d1f22', roughness: 0.8, sheen: 0.6, sheenColor: new THREE.Color('#4a4d52') });
-  const hotMat = new THREE.MeshStandardMaterial({ color: '#2a2220', roughness: 0.5, emissive: new THREE.Color('#ff7a22'), emissiveIntensity: 0.3 });
+  const mat = new THREE.MeshPhysicalMaterial({ color: '#4A4F55', roughness: 0.78 });
+  const hotMat = new THREE.MeshStandardMaterial({ color: '#1A73E8', roughness: 0.5, emissive: new THREE.Color('#1A73E8'), emissiveIntensity: 0.15 });
   const meshes = layers.map(L => { const grp = new THREE.Group(); L.slabs.forEach(g => { const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; grp.add(m); }); grp.visible = false; S.add(grp); return grp; });
-  const lineGeo = new THREE.BufferGeometry(); S.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: '#ffc070' })));
+  const lineGeo = new THREE.BufferGeometry(); S.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: '#1A73E8' })));
   const FR = +q.get('frames') || 300;
   return f => {
     const t = f / FR, prog = Math.min(0.999, t) * NL, L = Math.floor(prog), lt = prog - L, lay = layers[Math.min(L, NL - 1)];
@@ -160,18 +160,18 @@ SC.print = () => {
     const n = Math.max(1, Math.floor(lt * (lay.path.length - 1))), pts = [];
     for (let i = 1; i <= n; i++) { const a = lay.path[i - 1], bb = lay.path[i]; if (bb.ex) pts.push(a.x, lay.z + 0.08, a.y, bb.x, lay.z + 0.08, bb.y); }
     lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts.length ? pts : [0, 0, 0, 0, 0, 0], 3));
-    const p = lay.path[n] || lay.path[0]; head.position.set(p.x, lay.z + 0.3, p.y); head.userData.glow.intensity = 60;
+    const p = lay.path[n] || lay.path[0]; head.position.set(p.x, lay.z + 0.3, p.y); head.userData.glow.intensity = 0;
     const a = 0.35 + ease(t) * 0.8; cam.position.set(Math.sin(a) * 175, 95 - t * 35, Math.cos(a) * 175); cam.lookAt(0, 3, 0);
   };
 };
 // ---- geração: pega a mudar com a largura do dedo ----
 SC.generate = () => {
-  S.background = new THREE.Color('#1a1b1e'); renderer.toneMappingExposure = 1.0; lights(1);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.ShadowMaterial({ opacity: 0.35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(40, 42, 3, 96), new THREE.MeshStandardMaterial({ color: '#c9ccd1', roughness: 0.3, metalness: 1 })); disc.position.y = 1.5; disc.receiveShadow = true; S.add(disc);
+  S.background = new THREE.Color('#F8F9FA'); renderer.toneMappingExposure = 1.0; lights(1); S.add(new THREE.HemisphereLight(0xffffff, 0xd0d4da, 1.0));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.ShadowMaterial({ opacity: 0.14 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; S.add(floor);
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(40, 42, 3, 96), new THREE.MeshStandardMaterial({ color: '#E8EAED', roughness: 0.5, metalness: 0.1 })); disc.position.y = 1.5; disc.receiveShadow = true; S.add(disc);
   const grp = new THREE.Group(); S.add(grp);
-  const mat = new THREE.MeshStandardMaterial({ color: '#2f3135', roughness: 0.55, metalness: 0.05 });
-  const wire = new THREE.LineBasicMaterial({ color: '#E9A23B', transparent: true, opacity: 0.55 });
+  const mat = new THREE.MeshStandardMaterial({ color: '#4A4F55', roughness: 0.6, metalness: 0.05 });
+  const wire = new THREE.LineBasicMaterial({ color: '#1A73E8', transparent: true, opacity: 0.5 });
   const dim = new THREE.Group(); S.add(dim);
   const FR = +q.get('frames') || 240;
   return f => {
@@ -183,7 +183,7 @@ SC.generate = () => {
     grp.rotation.set(-Math.PI / 2, 0, t * Math.PI * 2 * 0.5); grp.position.y = 3 + G.consts.PLUG_H; grp.scale.setScalar(2.2);
     dim.clear(); const Wp = E.clamp(0.9 * w, 13, 22) * 2.2 / 2, yv = 34, zz = 0;
     const P = [[-Wp, yv, zz], [Wp, yv, zz], [-Wp, yv - 4, zz], [-Wp, yv + 4, zz], [Wp, yv - 4, zz], [Wp, yv + 4, zz]].map(v => new THREE.Vector3(...v));
-    dim.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(P), new THREE.LineBasicMaterial({ color: '#E9A23B' })));
+    dim.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(P), new THREE.LineBasicMaterial({ color: '#202124' })));
     window.__w = w;
     cam.position.set(0, 70, 120); cam.lookAt(0, 12, 0);
   };

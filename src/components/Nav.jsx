@@ -14,6 +14,7 @@ export default function Nav() {
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Principal" onClick={() => setOpen(false)}>
           <NavLink to="/" end>Visão geral</NavLink>
           <NavLink to="/loja">Loja</NavLink>
+          <NavLink to="/tecnologia">Tecnologia</NavLink>
           <NavLink to="/feito-contigo">Feito contigo</NavLink>
           <NavLink to="/porque">Porquê</NavLink>
           <NavLink to="/vender">Vender</NavLink>

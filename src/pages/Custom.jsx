@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { supabase, BASE } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.jsx';
 import { PHONES } from '../lib/engine.js';
-import { Icon, useToast, useReveal } from '../components/ui.jsx';
+import { Icon, useToast, useReveal, Photo } from '../components/ui.jsx';
+import { PHOTOS } from '../lib/photos.js';
 
 const STEPS = [
   ['01', 'Escreves', 'Contas-nos o que torna difícil segurar ou usar o telemóvel. Não precisas de relatórios médicos.', 'mail'],
@@ -64,7 +65,7 @@ export default function Custom() {
             <Link className="key key-alu key-lg" to="/configurar">Experimentar o configurador</Link>
           </div>
         </div>
-        <figure className="custom-hero-art"><img src={`${BASE}/ilustracoes/contigo.webp`} alt="Quatro etapas: escreves, falamos, medimos, fazemos." width="1800" height="1350" /></figure>
+        <div className="custom-hero-art"><Photo p={PHOTOS.contigo} ratio={4 / 3} eager /></div>
       </section>
 
       <section className="wrap custom-steps">

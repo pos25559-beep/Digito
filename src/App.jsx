@@ -18,6 +18,7 @@ const Terms = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Ter
 const Privacy = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Privacy })));
 const Custom = lazy(() => import('./pages/Custom.jsx'));
 const Why = lazy(() => import('./pages/Why.jsx'));
+const Tech = lazy(() => import('./pages/Tech.jsx'));
 const Help = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Help })));
 const TITLES = { '/': 'DÍGITO — capas à medida para mãos que precisam de mais apoio', '/loja': 'Loja · DÍGITO', '/configurar': 'Configurar · DÍGITO', '/carrinho': 'Carrinho · DÍGITO', '/entrar': 'Entrar · DÍGITO', '/vender': 'Vender · DÍGITO', '/termos': 'Termos de venda · DÍGITO', '/privacidade': 'Privacidade · DÍGITO', '/ajuda': 'Ajuda e contacto · DÍGITO', '/porque': 'Porque existe a DÍGITO', '/feito-contigo': 'Feito contigo · DÍGITO' };
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/vender/:tab" element={<Seller />} />
             <Route path="/u/:username" element={<PublicProfile />} />
             <Route path="/porque" element={<Why />} />
+            <Route path="/tecnologia" element={<Tech />} />
             <Route path="/feito-contigo" element={<Custom />} />
             <Route path="/termos" element={<Terms />} />
             <Route path="/privacidade" element={<Privacy />} />
