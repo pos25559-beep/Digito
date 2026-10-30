@@ -30,6 +30,7 @@ export default function Cart() {
       if (body?.error === 'payments_not_configured') setErr('Os pagamentos estão a ser ligados à nossa conta Stripe. Volta a tentar dentro de pouco tempo.');
       else if (body?.error === 'terms_required' || body?.error === 'custom_ack_required') setErr(body.message + ' Atualiza a página e tenta outra vez.');
       else if (body?.error === 'listing_unavailable') setErr('Um dos produtos deixou de estar à venda. Remove-o e tenta outra vez.');
+      else if (body?.error === 'material_unavailable') setErr('Um dos teus designs usa um material que deixámos de fabricar. Abre-o no configurador, guarda-o de novo e volta a tentar.');
       else setErr(body?.message || 'Não foi possível iniciar o pagamento. Tenta outra vez.');
       return;
     }

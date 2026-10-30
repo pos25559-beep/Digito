@@ -3,14 +3,12 @@
 export const CASE_CENTS = 2400;
 export const GRIP_CENTS = { sela: 450, ring: 1200, blank: 150, shelf: 450 };
 export const MATERIAL_FACTOR = { FDM_PETG_CF: 1.0, SLS_PA12: 1.3, SLA_TOUGH: 1.4 };
-export const TITANIUM_GRIP_CENTS = 6900;
 export const SHIPPING = { pickup: { label: 'Levantamento na FCT NOVA', cents: 0 }, ctt: { label: 'Envio CTT (Portugal)', cents: 390 } };
 export const FREE_SHIPPING_FROM = 5000;
 export function designPrice(grips, material) {
   let total = CASE_CENTS;
   for (const g of grips) {
-    if (material === 'SLM_TI64' && g.type !== 'blank') total += TITANIUM_GRIP_CENTS;
-    else total += Math.round((GRIP_CENTS[g.type] ?? 450) * (MATERIAL_FACTOR[material] ?? 1));
+    total += Math.round((GRIP_CENTS[g.type] ?? 450) * (MATERIAL_FACTOR[material] ?? 1));
   }
   return total;
 }

@@ -7,7 +7,8 @@ import * as G from '../lib/geometry.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
 import { fmt, eur } from '../lib/pricing.js';
 import { HIGHLIGHTS } from '../lib/why.js';
-import { Icon, Range, useReveal, reducedMotion, AutoVideo, Photo } from '../components/ui.jsx';
+import { Icon, Range, useReveal, reducedMotion, AutoVideo, Photo, StepVideo } from '../components/ui.jsx';
+import { LOCK_VIDEO } from '../lib/motion.js';
 import { PHOTOS } from '../lib/photos.js';
 
 const V = f => `${BASE}/video/${f}`;
@@ -63,8 +64,7 @@ function Lab() {
 const MATS = [
   { name: 'TPU 95A', proc: 'FDM · capa', dot: 'radial-gradient(circle at 35% 30%, #5a5c61, #1b1c1f 70%)', E: '9–26 MPa', rho: '1,22 g/cm³', c: '0,25 mm', note: 'Elástico. Absorve a queda nos cantos.' },
   { name: 'PETG-CF', proc: 'FDM · pegas', dot: 'repeating-linear-gradient(45deg,#2b2d31 0 2px,#3a3d42 2px 4px)', E: '3,8 GPa', rho: '1,29 g/cm³', c: '0,20 mm', note: 'Rígido e mate, com fibra de carbono.' },
-  { name: 'Tough 2000', proc: 'SLA · pegas', dot: 'radial-gradient(circle at 35% 30%, #6b7484, #2d3440 70%)', E: '2,2 GPa', rho: '1,18 g/cm³', c: '0,08 mm', note: 'Resina tenaz, acabamento liso e tolerância fina.' },
-  { name: 'Ti6Al4V', proc: 'SLM · edição', dot: 'linear-gradient(135deg,#e4e6e9,#8e9298 45%,#cfd2d6 60%,#7c8086)', E: '110 GPa', rho: '4,43 g/cm³', c: '0,10 mm', note: 'Titânio grau 5, fundido a laser.' }
+  { name: 'PETG', proc: 'FDM · insert do encaixe', dot: 'radial-gradient(circle at 35% 30%, #8ab4f8, #1a73e8 70%)', E: '2,1 GPa', rho: '1,27 g/cm³', c: '0,20 mm', note: 'Rígido. Leva as patilhas da pega no DÍGITO Lock (em validação).' },
 ];
 const COLORS = ['c-red', 'c-blue', 'c-violet', 'c-green'];
 const NEEDS = [
@@ -152,7 +152,7 @@ export default function Home() {
           <div className="story-copy">
             <span className="story-step"><span className="num">3</span>Imprimir</span>
             <h2>Impressa em 3D, porque não há duas iguais</h2>
-            <p>Uma peça única não justifica um molde. A capa sai em TPU flexível e as pegas em PETG com fibra de carbono, resina tenaz ou titânio. Encaixam sem ferramentas e trocam-se se a tua mão mudar.</p>
+            <p>Uma peça única não justifica um molde. A capa sai em TPU flexível e as pegas em PETG com fibra de carbono. Encaixam sem ferramentas e trocam-se se a tua mão mudar.</p>
             <div className="facts"><div className="fact"><b>Desde 1</b><span>peça por encomenda</span></div><div className="fact"><b>Sem</b><span>moldes nem stock</span></div></div>
           </div>
         </section>
@@ -160,13 +160,13 @@ export default function Home() {
 
       <section className="wrap tech-sec" id="encaixe">
         <div className="lock-band">
-          <div className="tech-hero-media reveal"><AutoVideo src={`${BASE}/motion/lock.mp4`} poster={`${BASE}/motion/lock.jpg`} label="Animação em corte do DÍGITO Lock: a pega desce, roda 60 graus e fica presa por três patilhas debaixo do lábio do insert." /></div>
+          <div className="reveal"><StepVideo {...LOCK_VIDEO} /></div>
           <div className="lock-copy reveal">
             <span className="why-kicker">Tecnologia · DÍGITO Lock</span>
             <h2>Uma pega que não cai do nada</h2>
             <p>Para quem apoia o peso do telemóvel nas pegas, o encaixe não pode falhar. A nova baioneta prende cada pega com três patilhas: empurras, rodas 60° e ouves o clique. Puxar não a solta, e não tem peças móveis.</p>
             <div className="lock-facts">
-              <div><b>~30×</b><span>mais força para arrancar a pega do que com ímanes</span></div>
+              <div><b>190 N</b><span>para arrancar a pega (cálculo), contra ~6 N dos ímanes</span></div>
               <div><b>2×</b><span>margem no caso de projeto</span></div>
               <div><b>0</b><span>peças móveis</span></div>
             </div>

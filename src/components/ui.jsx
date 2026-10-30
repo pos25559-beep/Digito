@@ -77,3 +77,26 @@ export function Photo({ p, ratio, sizes = '(max-width: 900px) 100vw, 50vw', eage
     </figure>
   );
 }
+
+/** vídeo com legenda do passo atual em HTML (lida por leitores de ecrã e legível em qualquer ecrã) */
+export function StepVideo({ src, poster, label, steps, legend }) {
+  const ref = useRef(); const [i, setI] = useState(0); const still = reducedMotion();
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const onT = () => { const t = el.currentTime; let k = 0; steps.forEach((s, j) => { if (t >= s[0]) k = j; }); setI(k); };
+    el.addEventListener('timeupdate', onT);
+    let io; if (!still) { io = new IntersectionObserver(([e]) => { if (e.isIntersecting) el.play().catch(() => {}); else el.pause(); }, { threshold: 0.25 }); io.observe(el); }
+    return () => { el.removeEventListener('timeupdate', onT); io?.disconnect(); };
+  }, []); // eslint-disable-line
+  const cur = still ? steps.length - 1 : i; const s = steps[cur];
+  return (
+    <figure className="stepvideo">
+      <div className="stepvideo-media"><video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} controls={still} /></div>
+      <figcaption>
+        <div className="stepvideo-cap" aria-live="off"><span className="stepvideo-n">{s[1]}</span><div><b>{s[2]}</b><span>{s[3]}</span></div></div>
+        <ol className="stepvideo-dots" aria-hidden="true">{steps.map((x, j) => <li key={j} className={j === cur ? 'on' : ''} />)}</ol>
+        {legend && <ul className="stepvideo-legend">{legend.map(([c, t]) => <li key={t}><i style={{ background: c }} />{t}</li>)}</ul>}
+      </figcaption>
+    </figure>
+  );
+}

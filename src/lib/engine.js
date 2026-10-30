@@ -31,7 +31,9 @@ export const MATERIALS = {
   SLA_TOUGH: { name: 'Tough 2000', proc: 'SLA', E: 2200, sy: 46, rho: 1.18, c: 0.08, minStrut: 0.8, cg: 0.22, rate: 8.5, build: 28, post: 6.5, color: '#30353f', note: 'Acabamento liso, tolerância fina.', hexF: 51.2, hexT: 1.54 },
   SLM_TI64: { name: 'Ti6Al4V', proc: 'SLM', E: 110000, sy: 880, rho: 4.43, c: 0.10, minStrut: 0.6, cg: 0.52, rate: 62.0, build: 16.5, post: 38.0, color: '#8d9198', note: 'Titânio. Edição premium.', hexF: 58.5, hexT: 1.78, metal: true }
 };
-export const GRIP_MATERIALS = ['FDM_PETG_CF', 'SLS_PA12', 'SLA_TOUGH', 'SLM_TI64'];
+// Por agora só se fabrica em FDM: capa em TPU 95A e pegas em PETG-CF. Os restantes materiais ficam definidos
+// apenas para abrir designs antigos; não aparecem no configurador.
+export const GRIP_MATERIALS = ['FDM_PETG_CF'];
 
 /* ---------- 3. Estimativa antropométrica a partir da estatura ---------- */
 const BASE_FINGERS = { index: [19.2, 18.5], middle: [20.1, 22.8], ring: [18.6, 20.4], pinky: [15.8, 15.2] };

@@ -68,7 +68,7 @@ export default function Custom() {
         <div className="custom-hero-art"><Photo p={PHOTOS.contigo} ratio={4 / 3} eager /></div>
       </section>
 
-      <section className="wrap custom-steps">
+      <section className="wrap custom-steps" aria-labelledby="como-h"><h2 id="como-h" className="sr">Como funciona um pedido</h2>
         {STEPS.map(([n, t, d, ic]) => (
           <div key={n} className="cstep reveal"><span className="cstep-n">{n}</span><Icon n={ic} /><h3>{t}</h3><p>{d}</p></div>
         ))}

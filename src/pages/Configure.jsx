@@ -50,7 +50,7 @@ function FitWarning({ issues, S, set }) {
     </div>
   );
 }
-const loadCfg = () => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEF; } };
+const loadCfg = () => { try { const c = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; if (!E.GRIP_MATERIALS.includes(c.gripMat)) c.gripMat = DEF.gripMat; return c; } catch { return DEF; } };
 
 function handModel(S) {
   const base = S.measured ? JSON.parse(JSON.stringify(S.measured)) : E.estimateHand({ heightCm: S.height, sex: S.sex, hand: S.hand });
@@ -376,12 +376,8 @@ export default function Configure() {
                     </div>
                   </div>); })}
               </div>
-              <div className="field"><span className="lbl">Material das pegas</span>
-                <div className="swatches">{E.GRIP_MATERIALS.map(id => { const m = E.MATERIALS[id]; return (
-                  <button key={id} className="sw" aria-pressed={S.gripMat === id} onClick={() => set({ gripMat: id })}>
-                    <i style={{ background: m.metal ? 'linear-gradient(135deg,#e4e6e9,#8e9298 45%,#cfd2d6 60%,#7c8086)' : id === 'SLA_TOUGH' ? 'radial-gradient(circle at 35% 30%, #6b7484, #2d3440 70%)' : id === 'SLS_PA12' ? 'radial-gradient(circle at 40% 30%, #75767a, #3b3c3f 80%)' : 'repeating-linear-gradient(45deg,#2b2d31 0 2px,#3a3d42 2px 4px)' }} />
-                    <b>{m.name}</b><small>{m.proc}</small></button>); })}</div>
-                <span className="hint">{mt.note} Folga do encaixe {fmt(mt.c, 2)} mm.</span>
+              <div className="field"><span className="lbl">Materiais</span>
+                <p className="hint" style={{ margin: 0 }}>Capa em TPU 95A flexível e pegas em {mt.name} rígido, ambos impressos em FDM. Folga do encaixe {fmt(mt.c, 2)} mm.</p>
               </div>
               <div className="field">
                 <div className="row" style={{ justifyContent: 'space-between' }}><label htmlFor="dh">Altura de queda de projeto</label><span className="mono" style={{ color: 'var(--ink)' }}>{fmt(S.dropH)} m</span></div>

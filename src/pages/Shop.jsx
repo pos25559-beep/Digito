@@ -36,19 +36,13 @@ export default function Shop() {
       </div>
       <div className="toolbar">
         <div className="keyrow" role="group" aria-label="Categoria">
-          {['todos', 'kit', 'capa', 'pega', 'acessorio'].map(c => <button key={c} className="key key-alu" aria-pressed={cat === c} onClick={() => set('cat', c)}>{c === 'todos' ? 'Tudo' : CATEGORY_PT[c]}</button>)}
+          {['todos', 'capa', 'kit'].map(c => <button key={c} className="key key-alu" aria-pressed={cat === c} onClick={() => set('cat', c)}>{c === 'todos' ? 'Tudo' : CATEGORY_PT[c]}</button>)}
         </div>
         <div className="row">
-          <label className="sr" htmlFor="shop-q">Procurar</label>
-          <input id="shop-q" className="input" placeholder="Procurar…" value={qq} onChange={e => setQq(e.target.value)} style={{ width: 180 }} />
           <label className="sr" htmlFor="shop-tel">Telemóvel</label>
           <select id="shop-tel" className="input" value={phone} onChange={e => set('tel', e.target.value)}>
             <option value="">Todos os telemóveis</option>
             {Object.entries(E.PHONES).map(([k, p]) => <option key={k} value={k}>{p.name}</option>)}
-          </select>
-          <label className="sr" htmlFor="shop-ord">Ordenar</label>
-          <select id="shop-ord" className="input" value={sort} onChange={e => set('ord', e.target.value)}>
-            <option value="populares">Mais vendidos</option><option value="novos">Mais recentes</option><option value="preco-asc">Preço: mais baixo</option><option value="preco-desc">Preço: mais alto</option>
           </select>
         </div>
       </div>

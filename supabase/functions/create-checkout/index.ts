@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { designPrice, SHIPPING, FREE_SHIPPING_FROM, TERMS_VERSION } from "./pricing.ts";
+import { designPrice, SHIPPING, FREE_SHIPPING_FROM, TERMS_VERSION, GRIP_MATERIALS } from "./pricing.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
     } else if (it.design_id) {
       const d = (designs || []).find((x) => x.id === it.design_id);
       if (!d) return json({ error: "design_not_found", id: it.design_id }, 404);
+      if (!GRIP_MATERIALS.includes(d.grip_material)) return json({ error: "material_unavailable", id: it.design_id }, 409);
       const unit = designPrice(d.grips || [], d.grip_material);
       lines.push({ title: `Kit DÍGITO à medida — ${d.name}`, unit, qty, design_id: d.id, seller_id: null, config: { phone: d.phone_model, style: d.grip_style, grips: d.grips, material: d.grip_material, hand: d.hand } });
     }

@@ -20,7 +20,7 @@ const Custom = lazy(() => import('./pages/Custom.jsx'));
 const Why = lazy(() => import('./pages/Why.jsx'));
 const Tech = lazy(() => import('./pages/Tech.jsx'));
 const Help = lazy(() => import('./pages/Legal.jsx').then(m => ({ default: m.Help })));
-const TITLES = { '/': 'DÍGITO — capas à medida para mãos que precisam de mais apoio', '/loja': 'Loja · DÍGITO', '/configurar': 'Configurar · DÍGITO', '/carrinho': 'Carrinho · DÍGITO', '/entrar': 'Entrar · DÍGITO', '/vender': 'Vender · DÍGITO', '/termos': 'Termos de venda · DÍGITO', '/privacidade': 'Privacidade · DÍGITO', '/ajuda': 'Ajuda e contacto · DÍGITO', '/porque': 'Porque existe a DÍGITO', '/feito-contigo': 'Feito contigo · DÍGITO' };
+const TITLES = { '/': 'DÍGITO — capas à medida para mãos que precisam de mais apoio', '/loja': 'Loja · DÍGITO', '/configurar': 'Configurar · DÍGITO', '/carrinho': 'Carrinho · DÍGITO', '/entrar': 'Entrar · DÍGITO', '/vender': 'Vender · DÍGITO', '/termos': 'Termos de venda · DÍGITO', '/privacidade': 'Privacidade · DÍGITO', '/ajuda': 'Ajuda e contacto · DÍGITO', '/porque': 'Porque existe a DÍGITO', '/feito-contigo': 'Feito contigo · DÍGITO', '/tecnologia': 'DÍGITO Lock: a tecnologia · DÍGITO' };
 export default function App() {
   const loc = useLocation();
   useEffect(() => { if (!loc.hash) window.scrollTo(0, 0); document.title = TITLES[loc.pathname] || 'DÍGITO'; }, [loc.pathname]); // eslint-disable-line

@@ -51,7 +51,7 @@ img, video, canvas { max-width: 100%; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .spacer { flex: 1; }
 .reveal { opacity: 1; transform: none; transition: opacity .8s var(--ease), transform .8s var(--ease); }
-.js .reveal:not(.in) { opacity: 0; transform: translateY(24px); }
+.js .reveal:not(.in) { opacity: .35; transform: translateY(16px); }
 
 /* ---------- superfícies ---------- */
 .plate { position: relative; background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r-card); }
@@ -221,14 +221,14 @@ input[type=range].knurl::-moz-range-thumb { width: 20px; height: 20px; border: 0
   .pcard:hover { transform: none; }
 }
 
-.mat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.mat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .mat { border-radius: var(--r-card); background: #fff; padding: 24px; display: grid; gap: 14px; align-content: start; border: 1px solid var(--line-2); }
 .mat-dot { width: 56px; height: 56px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
 .mat h3 { font-size: 22px; }
 .mat dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; }
 .mat dt { color: var(--ink-3); }
 .mat dd { margin: 0; text-align: right; font-family: var(--f-code); color: var(--ink); }
-@media (max-width: 1000px) { .mat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .mat-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) { .mat-grid { grid-template-columns: 1fr; } }
 
 .cta-final { padding-block: 112px; text-align: center; display: grid; gap: 24px; justify-items: center; }
@@ -344,7 +344,7 @@ table.dat { width: 100%; border-collapse: collapse; font-size: 15px; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 footer.foot { background: var(--surface); padding-block: 48px calc(32px + env(safe-area-inset-bottom, 0px)); color: var(--ink-3); font-size: 14px; border-top: 1px solid var(--line-2); }
 .foot-grid { display: grid; grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); gap: 28px; }
-.foot-grid h4 { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 12px; }
+.foot-grid .foot-h { font-size: 14px; font-weight: 500; color: var(--ink); margin: 0 0 12px; }
 .foot-grid a { display: block; padding: 4px 0; color: var(--ink-3); }
 .foot-base { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line-2); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; }
 @media (max-width: 760px) { .foot-grid { grid-template-columns: 1fr 1fr; } }
@@ -817,3 +817,19 @@ details.more .pk { margin-top: 8px; width: 100%; }
 .contigo-art .photo, .custom-hero-art .photo { aspect-ratio: 4 / 3; }
 .story-media .photo { position: absolute; inset: 0; }
 .story-media .tagpill { z-index: 2; }
+
+/* vídeo com legenda sincronizada */
+.stepvideo { margin: 0; display: grid; gap: 14px; }
+.stepvideo-media { border-radius: var(--r-lg); overflow: hidden; background: #F8F9FA; border: 1px solid var(--line-2); aspect-ratio: 16 / 10; }
+.stepvideo-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.stepvideo figcaption { display: grid; gap: 10px; }
+.stepvideo-cap { display: flex; gap: 12px; align-items: flex-start; min-height: 52px; }
+.stepvideo-cap b { display: block; color: var(--ink); font-weight: 500; font-size: 17px; }
+.stepvideo-cap span:not(.stepvideo-n) { font-size: 15px; color: var(--ink-3); line-height: 1.45; }
+.stepvideo-n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 500; }
+.stepvideo-dots { list-style: none; display: flex; gap: 6px; margin: 0; padding: 0; }
+.stepvideo-dots li { width: 18px; height: 4px; border-radius: 2px; background: var(--line); transition: background .3s, width .3s; }
+.stepvideo-dots li.on { background: var(--blue); width: 32px; }
+.stepvideo-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; font-size: 13px; color: var(--ink-3); }
+.stepvideo-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.story-media video { object-fit: contain; background: #F8F9FA; }

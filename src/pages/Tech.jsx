@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
-import { BASE } from '../lib/supabase.js';
-import { Icon, useReveal, AutoVideo } from '../components/ui.jsx';
+import { Icon, useReveal, StepVideo } from '../components/ui.jsx';
+import { LOCK_VIDEO, PRINT_VIDEO } from '../lib/motion.js';
 import { HBars } from '../components/charts.jsx';
 
-const M = f => `${BASE}/motion/${f}`;
 const GH = 'https://github.com/pos25559-beep/Digito/tree/main/eng';
 
 const STEPS = [
@@ -51,7 +50,7 @@ export default function Tech() {
           <p className="lead">Quem treme ou tem pouca força apoia o peso do telemóvel nas pegas. Por isso o encaixe entre a pega e a capa é a peça mais importante da DÍGITO. Trocámos os ímanes por uma baioneta sem peças móveis, que só se solta quando tu queres.</p>
           <p className="tech-status"><Icon n="science" size={18} />Em validação: o desenho está fechado e os protótipos estão a ser ensaiados. Até lá, as capas usam o encaixe com ímanes.</p>
         </div>
-        <div className="tech-hero-media"><AutoVideo src={M('lock.mp4')} poster={M('lock.jpg')} label="Animação em corte do DÍGITO Lock: a pega alinha, desce, roda 60 graus e fica presa por três patilhas debaixo do lábio do insert azul." /></div>
+        <div className="tech-hero-media-wrap"><StepVideo {...LOCK_VIDEO} /></div>
       </section>
 
       <div className="wrap"><nav className="chips-bar" aria-label="Secções">{AREAS.map(([id, t, ic]) => <a key={id} className="chip-link" href={`#${id}`}><Icon n={ic} />{t}</a>)}</nav></div>
@@ -79,15 +78,15 @@ export default function Tech() {
           <div className="plate reveal"><HBars title="Força para soltar ou partir a pega" sub="Newtons. A linha marca a carga de projeto: 30 N, cerca de 3 kg pendurados." unit="N" rows={HOLD} refs={[{ value: 30, label: 'Projeto: 30 N' }]} table={['Encaixe', 'N']} /></div>
           <div className="plate reveal"><HBars title="Fator de segurança por caso de carga" sub="Quantas vezes a peça aguenta a carga desse caso. Abaixo de 1 parte; o nosso alvo é 2." unit="×" rows={FS} refs={[{ value: 1, label: 'Rotura', anchor: 'end' }, { value: 2, label: 'Alvo' }]} max={9.5} decimals={1} /></div>
         </div>
-        <aside className="weak reveal"><div className="weak-h"><Icon n="balance" size={20} />Onde o desenho ainda é fraco</div>
-          <p>Se alguém usar o anel como alavanca (1 N·m), a margem é de apenas 1,1. Aceitamos este valor porque, se partir, parte a patilha da pega e não a capa. Se o ensaio mostrar que parte cedo de mais, as patilhas passam de 1,4 para 1,6 mm (há espaço para isso) ou a pega passa a ser impressa em resina tenaz.</p>
+        <div className="weak reveal" role="note"><div className="weak-h"><Icon n="balance" size={20} />Onde o desenho ainda é fraco</div>
+          <p>Se alguém usar o anel como alavanca (1 N·m), a margem é de apenas 1,1. Aceitamos este valor porque, se partir, parte a patilha da pega e não a capa. Se o ensaio mostrar que parte cedo de mais, as patilhas passam de 1,4 para 1,6 mm (há espaço para isso) ou as pegas passam a ser impressas em PETG sem fibra, que é menos frágil nas patilhas.</p>
           <p>A força para soltar depende da rigidez real do TPU, que varia quase três vezes entre fabricantes (9 a 26 MPa). Por isso o diâmetro do pilar só é escolhido depois de imprimir o provete.</p>
-        </aside>
+        </div>
       </section>
 
       <section className="band" id="fabrico">
         <div className="wrap tech-fab">
-          <div className="tech-fab-media reveal"><AutoVideo src={M('print2.mp4')} poster={M('print2.jpg')} label="Impressão com dois bicos: o fundo da capa em TPU cinzento, depois o insert azul em PETG e a capa à volta na mesma camada, e por fim a tampa de TPU." /></div>
+          <div className="reveal"><StepVideo {...PRINT_VIDEO} /></div>
           <div className="tech-fab-copy reveal">
             <span className="why-kicker">Fabrico</span>
             <h2>Dois materiais na mesma impressão</h2>
@@ -96,7 +95,7 @@ export default function Tech() {
               <dt>Capa</dt><dd>TPU 95A, flexível</dd>
               <dt>Insert e pega</dt><dd>PETG, rígido</dd>
               <dt>Bico e camada</dt><dd className="mono">0,4 mm · 0,2 mm</dd>
-              <dt>Folga radial</dt><dd className="mono">0,20 mm (FDM) · 0,10 mm (resina)</dd>
+              <dt>Folga radial</dt><dd className="mono">0,20 mm</dd>
               <dt>Folga axial</dt><dd className="mono">0,15 mm</dd>
               <dt>Altura do encaixe</dt><dd className="mono">4,95 mm</dd>
             </dl>
