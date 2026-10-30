@@ -210,8 +210,8 @@ export function gripParts(sock, type, mat) {
     return { parts, extra, label: 'Tampa cega' };
   }
   if (type === 'ring') {
-    const ped = podBody(15, 11, () => 3.0, 0.8, 0.35);
-    const id = w + 1.2, band = 3.0, depth = 5.0, Ro = id / 2 + band;
+    const ped = podBody(2 * E.LOCK.BOSS_R, 2 * E.LOCK.BOSS_R, () => 3.0, 0.8, 0.35); // pedestal com a largura da bossa: maior braço contra o momento do anel
+    const id = w + 1.2, band = E.LOCK.RING_BAND, depth = E.LOCK.RING_DEPTH, Ro = id / 2 + band;
     const ann = circlePath(0, 0, Ro, false); ann.holes.push(circlePath(0, 0, id / 2, true));
     const rg = new THREE.ExtrudeGeometry(ann, { depth, bevelEnabled: false });
     rg.translate(0, 0, -depth / 2); rg.rotateY(Math.PI / 2); rg.translate(0, 0, 2.2 + Ro);
@@ -225,7 +225,8 @@ export function gripParts(sock, type, mat) {
   }
   // sela: calha côncava ao longo do dedo (eixo x), com a largura do dedo e raio R_s = w / (2·sin 72°);
   // paredes laterais de 2 mm e extremidades rebaixadas para o dedo entrar e sair
-  const Lp = E.clamp(0.9 * w + 4, 18, 27), Wp = E.clamp(w + 4.5, 17, 31), Rs = Math.max(sock.rs, w / 2 + 0.3);
+  const env = sock.env || E.gripEnvelope(sock, type, sock.role);
+  const Lp = env.Lp, Wp = sock.Wp || env.Wp, Rs = Math.max(sock.rs, w / 2 + 0.3);
   const hp = E.clamp(0.36 * sock.d, 6.0, 9.5);
   const half = Math.min(w / 2, Wp / 2 - 1.2);
   const depth = Math.min(0.5 * hp, Rs - Math.sqrt(Math.max(0, Rs * Rs - half * half)));

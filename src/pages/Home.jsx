@@ -35,7 +35,7 @@ function Lab() {
     const { v, model, mats, gm } = view.current; const phone = E.PHONES.IPHONE_16_PRO;
     const base = E.estimateHand({ heightCm: 172 }); const k = w / base.fingers.middle.w;
     E.FINGERS.forEach(f => { base.fingers[f] = E.fingerRecord(base.fingers[f].w * k, base.fingers[f].d * k); });
-    const socks = E.sockets(base, phone, style); const imp = E.impact({ phone, h: 1.2 });
+    const socks = E.sockets(base, phone, style, ['sela', 'sela', 'sela', 'sela']); const imp = E.impact({ phone, h: 1.2 });
     const b = G.build({ phone, socks, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner });
     disposeGroup(model);
     b.caseParts.forEach(g => model.add(meshOf(g, mats.case)));

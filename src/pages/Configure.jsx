@@ -33,6 +33,23 @@ function presetText(needs) {
   else if (needs.includes('dor')) t.push('selas com o raio de cada dedo, para apoiar sem apertar');
   return 'Recomendamos ' + t.join('; ') + '.';
 }
+function FitWarning({ issues, S, set }) {
+  if (!issues?.length) return null;
+  const hasRing = S.types.some(t => t === 'ring');
+  const fixes = [];
+  if (S.style !== 'PINKY_SHELF') fixes.push(['Usar o mindinho por baixo', () => set({ style: 'PINKY_SHELF' })]);
+  if (hasRing) fixes.push(['Manter só um anel', () => set(s => { const i = s.types.indexOf('ring'); return { types: s.types.map((t, k) => t === 'ring' && k !== i ? 'sela' : t) }; })]);
+  if (S.style === 'PINKY_SHELF' && hasRing) fixes.push(['Pôr o anel no indicador', () => set(s => ({ types: ['ring', 'sela', 'sela', 'sela'] }))]);
+  return (
+    <div className="fitwarn" role="alert">
+      <Icon n="info" />
+      <div>
+        <p><b>Estas pegas não cabem todas nas costas deste telemóvel</b> sem se tocarem ou saírem da capa. Não deixamos encomendar uma capa assim. Escolhe uma destas soluções:</p>
+        <div className="row" style={{ gap: 8 }}>{fixes.map(([t, f]) => <button key={t} type="button" className="key key-line key-sm" onClick={f}>{t}</button>)}<Link className="key key-ghost key-sm" to="/feito-contigo#pedido">Pedir uma solução à medida</Link></div>
+      </div>
+    </div>
+  );
+}
 const loadCfg = () => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEF; } };
 
 function handModel(S) {
@@ -167,7 +184,7 @@ export default function Configure() {
 
   const hand = useMemo(() => handModel(S), [S]);
   const phone = E.PHONES[S.phoneId] || E.PHONES.IPHONE_16_PRO_MAX;
-  const socks = useMemo(() => E.sockets(hand, phone, S.style), [hand, phone, S.style]);
+  const socks = useMemo(() => E.sockets(hand, phone, S.style, S.types), [hand, phone, S.style, S.types]);
   const grips = socks.map((k, i) => ({ finger: k.finger, type: S.types[i], w: k.w, x: k.x, y: k.y, theta: k.theta, role: k.role }));
   const price = designPrice(grips, S.gripMat);
   const [phys, setPhys] = useState(null);
@@ -322,6 +339,7 @@ export default function Configure() {
                 <div className="pills">{NEEDS.map(([v, t, ic]) => { const on = S.needs.includes(v); return <button type="button" key={v} className={`pill ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => set(s => ({ needs: on ? s.needs.filter(x => x !== v) : [...s.needs, v] }))}><Icon n={on ? 'check' : ic} size={18} />{t}</button>; })}</div>
               </div>
               <div className="reco"><Icon n="lightbulb" /><div><p>{presetText(S.needs)}</p>{(() => { const p = preset(S.needs); const same = p.style === S.style && p.types.every((t, i) => t === S.types[i]); return same ? <span className="hint">Recomendação aplicada.</span> : <button type="button" className="key key-line key-sm" onClick={() => set(p)}>Aplicar recomendação</button>; })()}</div></div>
+              <FitWarning issues={socks.issues} S={S} set={set} />
               <div className="pick pick-1">{Object.entries(E.STYLES).filter(([id]) => id !== 'CAMERA_CLAW' || S.style === 'CAMERA_CLAW').map(([id, st]) => (
                 <button key={id} className="pk wide" aria-pressed={S.style === id} onClick={() => set({ style: id })}>
                   <span className="art"><StyleDiagram hand={hand} phoneId={S.phoneId} style={id} /></span>
@@ -341,6 +359,7 @@ export default function Configure() {
 
             {S.step === 4 && <>
               <div className="st-head"><span className="eyebrow">Passo 5 de 5</span><h2>Afina cada pega</h2><p>Toca ou passa por cima de um dedo para o ver destacado no modelo.</p></div>
+              <FitWarning issues={socks.issues} S={S} set={set} />
               <div style={{ display: 'grid', gap: 10 }}>
                 {socks.map((k, i) => { const f = hand.fingers[k.finger]; return (
                   <div key={k.finger} className={`gripcard ${hl === i ? 'hl' : ''}`} onMouseEnter={() => setHl(i)} onMouseLeave={() => setHl(-1)} onFocus={() => setHl(i)} onClick={() => setHl(i)}>
@@ -386,7 +405,7 @@ export default function Configure() {
           {S.step > 0 && <button className="key key-ghost key-icon" onClick={() => go(S.step - 1)} aria-label="Passo anterior"><Icon n="arrow_back" /></button>}
           {S.step < 4
             ? <button className="key key-dark" onClick={() => go(S.step + 1)}>{S.step === 3 && !S.measured ? 'Saltar' : 'Continuar'}<Icon n="arrow_forward" size={20} /></button>
-            : <button className="key key-dark" onClick={saveAndCart} disabled={saving}><Icon n="shopping_bag" size={20} />{saving ? 'A guardar…' : <>Adicionar<span className="wide-only"> ao carrinho</span></>}</button>}
+            : <button className="key key-dark" onClick={saveAndCart} disabled={saving || socks.issues?.length > 0} title={socks.issues?.length ? 'Resolve primeiro o aviso das pegas' : undefined}><Icon n="shopping_bag" size={20} />{saving ? 'A guardar…' : <>Adicionar<span className="wide-only"> ao carrinho</span></>}</button>}
         </div>
       </aside>
 

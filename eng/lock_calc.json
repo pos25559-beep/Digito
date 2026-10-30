@@ -1,0 +1,238 @@
+{
+ "z": {
+  "insert_bottom": 0.6,
+  "insert_top": 4.35,
+  "lip_bottom": 2.55,
+  "notch_roof": 2.95,
+  "lug_top_locked": 2.95,
+  "lug_bottom_locked": 1.55,
+  "lug_top_pushed": 2.4,
+  "lug_bottom_pushed": 1.0,
+  "recess_roof_locked": 2.55,
+  "pillar_top_free": 2.7,
+  "pillar_root": 0.3
+ },
+ "geom": {
+  "h_pillar": 2.4,
+  "r_lug": 6.6,
+  "r_bore": 5.2,
+  "r_channel": 6.8,
+  "travel": 0.55,
+  "h_channel": 1.95,
+  "H_insert": 3.75,
+  "z_top_above_phone": 4.35,
+  "spring_max_defl": 0.7
+ },
+ "loads": {
+  "pull_service": 2.74,
+  "pull_design": 30.0,
+  "pull_ultimate_target": 90.0,
+  "torque_service": 240.0,
+  "moment_service": 356.2,
+  "moment_design": 500.0,
+  "moment_abuse": 1000.0,
+  "finger_push": 6.0
+ },
+ "lug": {
+  "PETG_CF": {
+   "design": {
+    "b_root": 3.49,
+    "sigma": 7.0,
+    "tau": 3.1,
+    "FS": 6.41
+   },
+   "ultimate": {
+    "F_lug_break": 192,
+    "F_lip_break": 261,
+    "weak_link": "patilha (pega)",
+    "ratio_lip_over_lug": 1.36
+   }
+  },
+  "PETG": {
+   "design": {
+    "b_root": 3.49,
+    "sigma": 7.0,
+    "tau": 3.1,
+    "FS": 6.7
+   },
+   "ultimate": {
+    "F_lug_break": 201,
+    "F_lip_break": 261,
+    "weak_link": "patilha (pega)",
+    "ratio_lip_over_lug": 1.3
+   }
+  },
+  "PA12_SLS": {
+   "design": {
+    "b_root": 3.49,
+    "sigma": 7.0,
+    "tau": 3.1,
+    "FS": 6.84
+   },
+   "ultimate": {
+    "F_lug_break": 205,
+    "F_lip_break": 261,
+    "weak_link": "patilha (pega)",
+    "ratio_lip_over_lug": 1.27
+   }
+  },
+  "TOUGH": {
+   "design": {
+    "b_root": 3.49,
+    "sigma": 7.0,
+    "tau": 3.1,
+    "FS": 6.56
+   },
+   "ultimate": {
+    "F_lug_break": 197,
+    "F_lip_break": 261,
+    "weak_link": "patilha (pega)",
+    "ratio_lip_over_lug": 1.33
+   }
+  }
+ },
+ "lip_design": {
+  "t_net": 1.4,
+  "sigma": 5.4,
+  "FS": 8.7
+ },
+ "notch_service": {
+  "A_per_lug": 0.64,
+  "pressure": 21.2,
+  "FS": 2.22,
+  "T_capacity_Nm": 0.53
+ },
+ "moment_service": {
+  "lever": 16.4,
+  "F_on_one_lug": 21.7,
+  "FS_lug": {
+   "PETG_CF": 2.96,
+   "PETG": 3.09,
+   "PA12_SLS": 3.16,
+   "TOUGH": 3.03
+  }
+ },
+ "moment_design": {
+  "lever": 16.4,
+  "F_on_one_lug": 30.5,
+  "FS_lug": {
+   "PETG_CF": 2.1,
+   "PETG": 2.2,
+   "PA12_SLS": 2.24,
+   "TOUGH": 2.15
+  }
+ },
+ "moment_abuse": {
+  "lever": 16.4,
+  "F_on_one_lug": 61.0,
+  "FS_lug": {
+   "PETG_CF": 1.05,
+   "PETG": 1.1,
+   "PA12_SLS": 1.12,
+   "TOUGH": 1.07
+  }
+ },
+ "pillar": {
+  "d=1.6": {
+   "E=9.2": {
+    "h": 2.4,
+    "k": 7.7,
+    "F_lock": 1.2,
+    "F_release": 5.4,
+    "strain_max": 0.29
+   },
+   "E=15.0": {
+    "h": 2.4,
+    "k": 12.6,
+    "F_lock": 1.9,
+    "F_release": 8.8,
+    "strain_max": 0.29
+   },
+   "E=26.0": {
+    "h": 2.4,
+    "k": 21.8,
+    "F_lock": 3.3,
+    "F_release": 15.2,
+    "strain_max": 0.29
+   }
+  },
+  "d=2.0": {
+   "E=9.2": {
+    "h": 2.4,
+    "k": 12.0,
+    "F_lock": 1.8,
+    "F_release": 8.4,
+    "strain_max": 0.29
+   },
+   "E=15.0": {
+    "h": 2.4,
+    "k": 19.6,
+    "F_lock": 2.9,
+    "F_release": 13.7,
+    "strain_max": 0.29
+   },
+   "E=26.0": {
+    "h": 2.4,
+    "k": 34.0,
+    "F_lock": 5.1,
+    "F_release": 23.8,
+    "strain_max": 0.29
+   }
+  },
+  "d=2.4": {
+   "E=9.2": {
+    "h": 2.4,
+    "k": 17.3,
+    "F_lock": 2.6,
+    "F_release": 12.1,
+    "strain_max": 0.29
+   },
+   "E=15.0": {
+    "h": 2.4,
+    "k": 28.3,
+    "F_lock": 4.2,
+    "F_release": 19.8,
+    "strain_max": 0.29
+   },
+   "E=26.0": {
+    "h": 2.4,
+    "k": 49.0,
+    "F_lock": 7.4,
+    "F_release": 34.3,
+    "strain_max": 0.29
+   }
+  },
+  "d=2.8": {
+   "E=9.2": {
+    "h": 2.4,
+    "k": 23.6,
+    "F_lock": 3.5,
+    "F_release": 16.5,
+    "strain_max": 0.29
+   },
+   "E=15.0": {
+    "h": 2.4,
+    "k": 38.5,
+    "F_lock": 5.8,
+    "F_release": 26.9,
+    "strain_max": 0.29
+   },
+   "E=26.0": {
+    "h": 2.4,
+    "k": 66.7,
+    "F_lock": 10.0,
+    "F_release": 46.7,
+    "strain_max": 0.29
+   }
+  }
+ },
+ "pillar_d_for_14N": {
+  "E=9.2": 2.58,
+  "E=15.0": 2.02,
+  "E=26.0": 1.53
+ },
+ "accidental": {
+  "finger_push": 6.0,
+  "note": "libertar exige F_release + rotação de 60° no sentido de abertura"
+ }
+}

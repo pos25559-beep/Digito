@@ -1,0 +1,11 @@
+{
+ "autodeskProduct": "Fusion",
+ "type": "script",
+ "author": "D\u00cdGITO",
+ "description": {
+  "": "D\u00cdGITO Lock v1: baioneta de bloqueio positivo (insert, macho, bossa TPU)"
+ },
+ "supportedOS": "windows|mac",
+ "editEnabled": true,
+ "iconFilename": ""
+}

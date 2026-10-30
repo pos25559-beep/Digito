@@ -25,7 +25,7 @@ export function camBox(p) {
 
 /* ---------- 2. Materiais ---------- */
 export const MATERIALS = {
-  FDM_TPU_95A: { name: 'TPU 95A', proc: 'FDM', E: 65, sy: 18.5, rho: 1.22, c: 0.25, minStrut: 1.2, cg: 0.07, rate: 4.0, build: 18, post: 2.5, color: '#202226', note: 'Elastómero. Capa do protótipo.' },
+  FDM_TPU_95A: { name: 'TPU 95A', proc: 'FDM', E: 26, sy: 18.5, rho: 1.22, c: 0.25, minStrut: 1.2, cg: 0.07, rate: 4.0, build: 18, post: 2.5, color: '#202226', note: 'Elastómero. Capa do protótipo.' },
   FDM_PETG_CF: { name: 'PETG-CF', proc: 'FDM', E: 3800, sy: 58, rho: 1.29, c: 0.20, minStrut: 1.0, cg: 0.08, rate: 4.2, build: 24, post: 3.0, color: '#2a2c30', note: 'Rígido, mate. Pegas do protótipo de laboratório.', hexF: 46.8, hexT: 1.42 },
   SLS_PA12: { name: 'PA12', proc: 'SLS', E: 1750, sy: 48, rho: 1.01, c: 0.15, minStrut: 0.85, cg: 0.14, rate: 14.0, build: 42, post: 7.5, color: '#3a3b3e', note: 'Sem suportes. Série pequena.', hexF: 51.2, hexT: 1.54 },
   SLA_TOUGH: { name: 'Tough 2000', proc: 'SLA', E: 2200, sy: 46, rho: 1.18, c: 0.08, minStrut: 0.8, cg: 0.22, rate: 8.5, build: 28, post: 6.5, color: '#30353f', note: 'Acabamento liso, tolerância fina.', hexF: 51.2, hexT: 1.54 },
@@ -84,25 +84,105 @@ export const STYLES = {
   PINKY_SHELF: { name: 'Mindinho por baixo', desc: 'Três dedos atrás e o mindinho a servir de prateleira. A pega mais comum.' },
   CAMERA_CLAW: { name: 'Modo câmara', desc: 'Pegas em diagonal, afastadas da câmara, para fotografar com uma mão.' }
 };
-export function sockets(hand, phone, style) {
+/* ---------- 5b. Envelope das pegas e posicionamento sem colisões ----------
+ * Cada pega tem uma "pegada" em planta (vista traseira), rodada pelo ângulo do encaixe.
+ * O posicionamento desce os encaixes um a um até não haver sobreposição (folga ≥ GAP_GRIP),
+ * respeita a proteção da câmara e o contorno da capa, e encolhe as selas antes de apertar os dedos.
+ */
+export const LOCK = { BOSS_R: 9.0, GAP_GRIP: 0.8, GAP_BOSS: 0.6, CAM_CLEAR: 3.8, EDGE_IN: 1.5, RING_BAND: 3.0, RING_DEPTH: 5.0 };
+export function gripEnvelope(f, type, role, wpCap = Infinity) {
+  const w = f.w;
+  if (role === 'shelf') return { kind: 'shelf', Lp: clamp(1.3 * w, 18, 28), Wp: clamp(0.75 * w, 11, 16) };
+  if (type === 'blank') return { kind: 'blank', R: LOCK.BOSS_R };
+  if (type === 'ring') { const id = w + 1.2; return { kind: 'ring', R: LOCK.BOSS_R, id, Ro: id / 2 + LOCK.RING_BAND, depth: LOCK.RING_DEPTH }; }
+  const Lp = clamp(0.9 * w + 4, 18, 27), WpIdeal = clamp(w + 4.5, 17, 31), WpMin = Math.max(w + 2.0, 2 * LOCK.BOSS_R);
+  return { kind: 'sela', Lp, Wp: Math.max(WpMin, Math.min(WpIdeal, wpCap)), WpMin, WpIdeal };
+}
+// contorno (polígono) da pegada em coordenadas do mundo
+function superellipse(a, b, n = 48) { const pts = []; for (let i = 0; i < n; i++) { const t = i / n * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t); pts.push([a * Math.sign(c) * Math.sqrt(Math.abs(c)), b * Math.sign(s) * Math.sqrt(Math.abs(s))]); } return pts; }
+function circle(r, n = 32) { const pts = []; for (let i = 0; i < n; i++) { const t = i / n * 2 * Math.PI; pts.push([r * Math.cos(t), r * Math.sin(t)]); } return pts; }
+function rect(hx, hy) { const pts = []; const k = 6; for (let i = 0; i <= k; i++) pts.push([-hx + 2 * hx * i / k, -hy]); for (let i = 0; i <= k; i++) pts.push([hx, -hy + 2 * hy * i / k]); for (let i = 0; i <= k; i++) pts.push([hx - 2 * hx * i / k, hy]); for (let i = 0; i <= k; i++) pts.push([-hx, hy - 2 * hy * i / k]); return pts; }
+export function footprints(s) {
+  const e = s.env, th = s.theta * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+  const tf = poly => poly.map(([x, y]) => [s.x + x * c - y * sn, s.y + x * sn + y * c]);
+  if (e.kind === 'sela' || e.kind === 'shelf') return [tf(superellipse(e.Lp / 2, e.Wp / 2))];
+  if (e.kind === 'ring') return [tf(superellipse(e.R, e.R)), tf(rect(e.depth / 2, e.Ro))]; // pedestal 18×18 (superelipse), banda do anel
+  return [tf(circle(e.R))];
+}
+function pip(pt, poly) { let inside = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) inside = !inside; } return inside; }
+function segDist(p, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy || 1; const t = clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L, 0, 1); return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); }
+function polyDist(A, B) { // distância mínima entre contornos; negativa se se intersectam
+  for (const p of A) if (pip(p, B)) return -1;
+  for (const p of B) if (pip(p, A)) return -1;
+  let d = Infinity;
+  for (const p of A) for (let i = 0; i < B.length; i++) d = Math.min(d, segDist(p, B[i], B[(i + 1) % B.length]));
+  for (const p of B) for (let i = 0; i < A.length; i++) d = Math.min(d, segDist(p, A[i], A[(i + 1) % A.length]));
+  return d;
+}
+export function gripDistance(s1, s2) { let d = Infinity; for (const A of footprints(s1)) for (const B of footprints(s2)) d = Math.min(d, polyDist(A, B)); return d; }
+function phoneSdf(phone, x, y, grow = 0) { const rr = phone.r + grow, qx = Math.abs(x) - (phone.W / 2 + grow - rr), qy = Math.abs(y) - (phone.L / 2 + grow - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; }
+function camDist(phone, s) { // distância da pegada à proteção da câmara (caixa expandida)
+  const cb = camBox(phone), g = LOCK.CAM_CLEAR;
+  const box = rect((cb.xmax - cb.xmin) / 2 + g, (cb.ymax - cb.ymin) / 2 + g).map(([x, y]) => [x + (cb.xmin + cb.xmax) / 2, y + (cb.ymin + cb.ymax) / 2]);
+  let d = Infinity; for (const A of footprints(s)) d = Math.min(d, polyDist(A, box)); return d;
+}
+function edgeOk(phone, s) { for (const A of footprints(s)) for (const [x, y] of A) if (phoneSdf(phone, x, y, 2.4 - LOCK.EDGE_IN) > 0) return false; return true; }
+
+const NATURAL_GAP = { FULL_4_FINGER: 2.5, PINKY_SHELF: 3.2, CAMERA_CLAW: 2.5 };
+export function sockets(hand, phone, style, types = ['sela', 'sela', 'sela', 'sela']) {
   const chi = hand.hand === 'LEFT' ? -1 : 1;
   const F = hand.fingers;
   const cb = camBox(phone);
-  const yCeil = Math.min(22, cb.ymin - 12.5);
   const bottom = -0.5 * phone.L;
+  const yCeil = Math.min(22, cb.ymin - 12.5);
+  // posições de partida e ângulos por estilo (x positivo = lado do polegar na mão direita)
   let spec;
-  if (style === 'FULL_4_FINGER') {
-    const yi = yCeil, ym = yi - (0.5 * (F.index.w + F.middle.w) + 2.5), yr = ym - (0.5 * (F.middle.w + F.ring.w) + 2.5), yp = yr - (0.5 * (F.ring.w + F.pinky.w) + 2.5);
-    spec = [['index', -chi * 5, yi, chi * 12], ['middle', -chi * 7.5, ym, chi * 8], ['ring', -chi * 5.5, yr, chi * 5], ['pinky', -chi * 2.5, yp, chi * 2]];
-  } else if (style === 'CAMERA_CLAW') {
-    const s = phone.L / 163; // escala ao comprimento do telemóvel
-    spec = [['index', -chi * 11.5, yCeil - 3.5, chi * 24], ['middle', -chi * 9.5, -6.5 * s, chi * 16], ['ring', -chi * 7, -34 * s, chi * 10], ['pinky', -chi * 4.5, -58.5 * s, chi * 6]];
-  } else {
-    const yi = Math.min(18.5, yCeil), ym = yi - (0.5 * (F.index.w + F.middle.w) + 3.2), yr = ym - (0.5 * (F.middle.w + F.ring.w) + 3.2);
-    // o mindinho fica na base do dorso, a 13 mm da aresta inferior, como apoio
-    spec = [['index', -chi * 5.5, yi, chi * 14], ['middle', -chi * 8, ym, chi * 9], ['ring', -chi * 6, yr, chi * 5], ['pinky', -chi * 12, bottom + 13, 0, 'shelf']];
-  }
-  return spec.map(([f, x, y, th, role]) => ({ finger: f, x: r2(x), y: r2(y), theta: r2(th), role: role || 'dorsal', ...F[f] }));
+  if (style === 'FULL_4_FINGER') spec = [['index', -5, chi * 12], ['middle', -7.5, chi * 8], ['ring', -5.5, chi * 5], ['pinky', -2.5, chi * 2]];
+  else if (style === 'CAMERA_CLAW') { const k = phone.L / 163; spec = [['index', -11.5, chi * 24, yCeil - 3.5], ['middle', -9.5, chi * 16, -6.5 * k], ['ring', -7, chi * 10, -34 * k], ['pinky', -4.5, chi * 6, -58.5 * k]]; }
+  else spec = [['index', -5.5, chi * 14], ['middle', -8, chi * 9], ['ring', -6, chi * 5], ['pinky', -12, 0, bottom + 13, 'shelf']];
+
+  const attempt = shrink => {
+    const out = []; const issues = [];
+    spec.forEach(([f, x0, th, yFixed, role], i) => {
+      const env = gripEnvelope(F[f], types[i], role, shrink ? 0 : Infinity);
+      const base = { finger: f, theta: r2(th), role: role || 'dorsal', ...F[f], env };
+      const xBase = chi * x0;
+      const prev = out[out.length - 1];
+      let yStart;
+      if (role === 'shelf') yStart = yFixed;
+      else if (!prev) yStart = Math.min(yFixed ?? (style === 'PINKY_SHELF' ? Math.min(18.5, yCeil) : yCeil), yCeil + 6);
+      else yStart = yFixed != null ? Math.min(yFixed, prev.y - 2 * LOCK.BOSS_R - LOCK.GAP_BOSS) : prev.y - (0.5 * (F[prev.finger].w + F[f].w) + NATURAL_GAP[style]);
+      // escalonamento ao longo do dedo quando dois anéis ficam lado a lado
+      const xs = env.kind === 'ring' && prev && prev.env.kind === 'ring' ? [0, 5.6, -5.6] : [0];
+      let best = null;
+      for (const dx of xs) {
+        const xc = xBase + dx * Math.cos(th * Math.PI / 180);
+        for (let y = yStart, n = 0; n < 400; y -= 0.25, n++) {
+          const s = { ...base, x: xc, y };
+          const clearCam = camDist(phone, s) >= 1.0;
+          const clearPrev = out.every(o => gripDistance(o, s) >= LOCK.GAP_GRIP && Math.hypot(o.x - s.x, o.y - s.y) >= 2 * LOCK.BOSS_R + LOCK.GAP_BOSS);
+          if (clearCam && clearPrev) { if (!best || y > best.y) best = s; break; }
+          if (role === 'shelf' && n > 0) break; // a prateleira não sobe nem desce: o resto é que se ajusta
+        }
+      }
+      if (!best) best = { ...base, x: xBase, y: yStart };
+      out.push(best);
+    });
+    // a prateleira pode ter ficado por baixo de um encaixe que desceu: verificar e sinalizar
+    out.forEach((s, i) => {
+      if (!edgeOk(phone, s)) issues.push({ kind: 'fora', finger: s.finger });
+      if (camDist(phone, s) < 1.0) issues.push({ kind: 'camara', finger: s.finger });
+      out.slice(i + 1).forEach(o => { if (gripDistance(s, o) < LOCK.GAP_GRIP - 0.05) issues.push({ kind: 'colisao', a: s.finger, b: o.finger }); });
+    });
+    const lowest = Math.min(...out.filter(s => s.role !== 'shelf').map(s => s.y));
+    if (lowest < bottom + 10) issues.push({ kind: 'nao_cabe' });
+    return { out, issues };
+  };
+  let res = attempt(false);
+  if (res.issues.length) { const r2_ = attempt(true); if (r2_.issues.length <= res.issues.length) res = r2_; }
+  const socks = res.out.map(s => ({ ...s, x: r2(s.x), y: r2(s.y), Wp: s.env.Wp }));
+  socks.issues = res.issues;
+  return socks;
 }
 
 /* ---------- 6. Modelo de impacto (sólidos celulares, Gibson & Ashby) ----------
