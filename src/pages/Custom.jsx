@@ -14,7 +14,7 @@ const STEPS = [
 ];
 const IDEAS = [
   ['Pegas maiores ou mais macias', 'Para quem tem dor nas articulações ou dificuldade em fechar a mão.'],
-  ['Anéis com outra abertura', 'Para dedos com deformação, inchaço ou que mudam de tamanho ao longo do dia.'],
+  ['Pegas para dedos que mudam', 'Para dedos com deformação, inchaço ou que mudam de tamanho ao longo do dia.'],
   ['Apoios para menos dedos', 'Para mãos com amputações ou dedos que não se movem.'],
   ['Outra forma de segurar', 'Pegas para segurar com a palma, com o pulso ou com o telemóvel apoiado.'],
 ];

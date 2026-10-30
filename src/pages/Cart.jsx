@@ -31,6 +31,7 @@ export default function Cart() {
       else if (body?.error === 'terms_required' || body?.error === 'custom_ack_required') setErr(body.message + ' Atualiza a página e tenta outra vez.');
       else if (body?.error === 'listing_unavailable') setErr('Um dos produtos deixou de estar à venda. Remove-o e tenta outra vez.');
       else if (body?.error === 'material_unavailable') setErr('Um dos teus designs usa um material que deixámos de fabricar. Abre-o no configurador, guarda-o de novo e volta a tentar.');
+      else if (body?.error === 'grip_unavailable') setErr('Um dos teus designs tem uma pega que ainda está em desenvolvimento (o anel). Abre-o no configurador, troca essa pega por uma sela, guarda e volta a tentar.');
       else setErr(body?.message || 'Não foi possível iniciar o pagamento. Tenta outra vez.');
       return;
     }

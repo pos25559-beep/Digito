@@ -5,6 +5,8 @@ export const GRIP_CENTS: Record<string, number> = { sela: 450, ring: 1200, blank
 export const MATERIAL_FACTOR: Record<string, number> = { FDM_PETG_CF: 1.0, SLS_PA12: 1.3, SLA_TOUGH: 1.4 };
 // Por agora só se fabricam pegas em PETG-CF (FDM). Designs antigos noutros materiais não podem ser pagos.
 export const GRIP_MATERIALS = ["FDM_PETG_CF"];
+// O anel está em desenho: só se vendem selas, apoios (shelf) e tampas cegas.
+export const GRIP_TYPES = ["sela", "shelf", "blank"];
 export const SHIPPING: Record<string, { label: string; cents: number }> = {
   pickup: { label: "Levantamento na FCT NOVA", cents: 0 },
   ctt: { label: "Envio CTT (Portugal)", cents: 390 },

@@ -79,7 +79,7 @@ export default function Tech() {
           <div className="plate reveal"><HBars title="Fator de segurança por caso de carga" sub="Quantas vezes a peça aguenta a carga desse caso. Abaixo de 1 parte; o nosso alvo é 2." unit="×" rows={FS} refs={[{ value: 1, label: 'Rotura', anchor: 'end' }, { value: 2, label: 'Alvo' }]} max={9.5} decimals={1} /></div>
         </div>
         <div className="weak reveal" role="note"><div className="weak-h"><Icon n="balance" size={20} />Onde o desenho ainda é fraco</div>
-          <p>Se alguém usar o anel como alavanca (1 N·m), a margem é de apenas 1,1. Aceitamos este valor porque, se partir, parte a patilha da pega e não a capa. Se o ensaio mostrar que parte cedo de mais, as patilhas passam de 1,4 para 1,6 mm (há espaço para isso) ou as pegas passam a ser impressas em PETG sem fibra, que é menos frágil nas patilhas.</p>
+          <p>Se alguém usar a pega como alavanca (1 N·m), a margem é de apenas 1,1. Aceitamos este valor porque, se partir, parte a patilha da pega e não a capa. Se o ensaio mostrar que parte cedo de mais, as patilhas passam de 1,4 para 1,6 mm (há espaço para isso) ou as pegas passam a ser impressas em PETG sem fibra, que é menos frágil nas patilhas.</p>
           <p>A força para soltar depende da rigidez real do TPU, que varia quase três vezes entre fabricantes (9 a 26 MPa). Por isso o diâmetro do pilar só é escolhido depois de imprimir o provete.</p>
         </div>
       </section>
@@ -105,10 +105,10 @@ export default function Tech() {
       </section>
 
       <section className="wrap tech-sec" id="configurador">
-        <div className="band-head reveal"><h2>Pegas que nunca se tocam</h2><p>O configurador passou a conhecer a forma real de cada pega e de cada anel, e não só o centro do encaixe.</p></div>
+        <div className="band-head reveal"><h2>Pegas que nunca se tocam</h2><p>O configurador passou a conhecer a forma real de cada pega, e não só o centro do encaixe.</p></div>
         <div className="tech-stats">
           <div className="tstat reveal"><span className="tstat-k">Antes</span><b>79,2%</b><p>das 2100 combinações de mão, telemóvel e pegas testadas tinham peças sobrepostas, fora da capa ou em cima da câmara.</p></div>
-          <div className="tstat reveal"><span className="tstat-k">Agora</span><b>1,1%</b><p>São mãos muito grandes com anéis em telemóveis pequenos. O configurador avisa, propõe uma correção e não deixa comprar sem ela.</p></div>
+          <div className="tstat reveal"><span className="tstat-k">Agora</span><b>1,1%</b><p>São sobretudo mãos muito grandes em telemóveis pequenos. O configurador avisa, propõe uma correção e não deixa comprar sem ela.</p></div>
           <div className="tstat reveal"><span className="tstat-k">Sem aviso</span><b>0</b><p>Cada combinação é verificada com as malhas 3D geradas. Nenhum problema passa sem ser assinalado.</p></div>
         </div>
       </section>

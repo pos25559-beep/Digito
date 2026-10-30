@@ -12,34 +12,31 @@ import { useAuth } from '../lib/auth.jsx';
 import { useCart } from '../lib/cart.jsx';
 import { Plate, LCD, Led, Icon, Range, useToast, reducedMotion } from '../components/ui.jsx';
 
-const TYPE_PT = { sela: 'Sela', ring: 'Anel', blank: 'Tampa cega' };
-const TYPE_ICON = { sela: 'swipe', ring: 'radio_button_unchecked', blank: 'hexagon' };
+// O anel saiu do configurador enquanto está em desenho (a geometria continua em geometry.js).
+const TYPE_PT = { sela: 'Sela', blank: 'Tampa cega' };
+const TYPE_ICON = { sela: 'swipe', blank: 'hexagon' };
 const STEPS = ['Telemóvel', 'Mão', 'Pega', 'Medir', 'Afinar'];
 const KEY = 'digito.cfg.v1';
 const DEF = { needs: [], phoneId: 'IPHONE_16_PRO_MAX', hand: 'RIGHT', sex: 'X', height: 172, style: 'PINKY_SHELF', measured: null, overrides: {}, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', dropH: 1.2, step: 0, maxStep: 0 };
-const NEEDS = [['tremor', 'A mão treme', 'radio_button_unchecked'], ['dor', 'Os dedos doem', 'swipe'], ['forca', 'Falta força', 'back_hand']];
+const NEEDS = [['tremor', 'A mão treme', 'vibration'], ['dor', 'Os dedos doem', 'swipe'], ['forca', 'Falta força', 'back_hand']];
 /** recomendação a partir das situações: estilo de pega e tipo de pega por dedo (indicador, médio, anelar, mindinho) */
 function preset(needs) {
   const style = needs.includes('forca') || needs.includes('tremor') || !needs.length ? 'PINKY_SHELF' : 'FULL_4_FINGER';
-  const types = ['sela', needs.includes('tremor') ? 'ring' : 'sela', 'sela', 'sela'];
+  const types = ['sela', 'sela', 'sela', 'sela'];
   return { style, types };
 }
 function presetText(needs) {
   if (!needs.length) return 'Sem nenhuma situação assinalada, recomendamos o mindinho por baixo e selas em todos os dedos: a pega mais confortável para a maioria das mãos.';
   const t = [];
-  if (needs.includes('tremor')) t.push('um anel no dedo médio, para o telemóvel não cair se a mão tremer');
-  if (needs.includes('forca')) t.push('o mindinho por baixo, a sustentar o peso');
+  if (needs.includes('tremor') || needs.includes('forca')) t.push('o mindinho por baixo, a sustentar o peso' + (needs.includes('tremor') ? ', e uma sela em cada dedo, para o telemóvel ficar seguro em quatro pontos se a mão tremer' : ''));
   if (needs.includes('dor') && !needs.includes('forca') && !needs.includes('tremor')) t.push('os quatro dedos atrás, cada um apoiado na sua sela, para não teres de apertar');
   else if (needs.includes('dor')) t.push('selas com o raio de cada dedo, para apoiar sem apertar');
   return 'Recomendamos ' + t.join('; ') + '.';
 }
 function FitWarning({ issues, S, set }) {
   if (!issues?.length) return null;
-  const hasRing = S.types.some(t => t === 'ring');
   const fixes = [];
   if (S.style !== 'PINKY_SHELF') fixes.push(['Usar o mindinho por baixo', () => set({ style: 'PINKY_SHELF' })]);
-  if (hasRing) fixes.push(['Manter só um anel', () => set(s => { const i = s.types.indexOf('ring'); return { types: s.types.map((t, k) => t === 'ring' && k !== i ? 'sela' : t) }; })]);
-  if (S.style === 'PINKY_SHELF' && hasRing) fixes.push(['Pôr o anel no indicador', () => set(s => ({ types: ['ring', 'sela', 'sela', 'sela'] }))]);
   return (
     <div className="fitwarn" role="alert">
       <Icon n="info" />
@@ -50,7 +47,7 @@ function FitWarning({ issues, S, set }) {
     </div>
   );
 }
-const loadCfg = () => { try { const c = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; if (!E.GRIP_MATERIALS.includes(c.gripMat)) c.gripMat = DEF.gripMat; return c; } catch { return DEF; } };
+const loadCfg = () => { try { const c = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; if (!E.GRIP_MATERIALS.includes(c.gripMat)) c.gripMat = DEF.gripMat; c.types = (Array.isArray(c.types) && c.types.length === 4 ? c.types : DEF.types).map(t => (t in TYPE_PT ? t : 'sela')); return c; } catch { return DEF; } };
 
 function handModel(S) {
   const base = S.measured ? JSON.parse(JSON.stringify(S.measured)) : E.estimateHand({ heightCm: S.height, sex: S.sex, hand: S.hand });
@@ -376,6 +373,7 @@ export default function Configure() {
                     </div>
                   </div>); })}
               </div>
+              <p className="hint more-soon"><Icon n="new_releases" size={18} />Por agora há selas e tampas cegas. Estamos a desenhar mais pegas, outras capas e cores. <Link to="/#em-breve">Sugere um modelo</Link></p>
               <div className="field"><span className="lbl">Materiais</span>
                 <p className="hint" style={{ margin: 0 }}>Capa em TPU 95A flexível e pegas em {mt.name} rígido, ambos impressos em FDM. Folga do encaixe {fmt(mt.c, 2)} mm.</p>
               </div>

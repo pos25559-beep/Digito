@@ -72,9 +72,9 @@ export default function Why() {
           <div className="fit">
             <h3>Onde a DÍGITO encaixa</h3>
             <ul>
-              <li><b>O anel</b> prende o telemóvel a um dedo. Se a mão treme ou perde força, o telemóvel não cai.</li>
               <li><b>A prateleira</b> põe o mindinho a suportar o peso por baixo, o que alivia o polegar e o pulso.</li>
               <li><b>A sela</b> dá a cada dedo um apoio do seu tamanho, em vez de obrigar a apertar uma superfície lisa.</li>
+              <li><b>Em desenvolvimento:</b> uma pega própria para quem tem tremor.</li>
             </ul>
             <p>Um estudo com terapeutas ocupacionais concluiu que eles se veem como quem prescreve e não como quem desenha. Os autores propõem ferramentas clínicas com uma biblioteca de designs-base que se ajustam a cada pessoa<C id="hofmann" />. É o que um configurador paramétrico faz.</p>
           </div>

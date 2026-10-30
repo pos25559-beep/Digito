@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import * as THREE from 'three';
 import { supabase, BASE, img, CATEGORY_PT } from '../lib/supabase.js';
 import * as E from '../lib/engine.js';
@@ -10,6 +10,7 @@ import { HIGHLIGHTS } from '../lib/why.js';
 import { Icon, Range, useReveal, reducedMotion, AutoVideo, Photo, StepVideo } from '../components/ui.jsx';
 import { LOCK_VIDEO } from '../lib/motion.js';
 import { PHOTOS } from '../lib/photos.js';
+import Roadmap from '../components/Roadmap.jsx';
 
 const V = f => `${BASE}/video/${f}`;
 
@@ -33,7 +34,7 @@ function Lab() {
     b.grips.forEach(gr => { const grp = new THREE.Group(); gr.parts.forEach(g => grp.add(meshOf(g, gm))); grp.position.set(gr.sock.x, gr.sock.y, G.consts.BACK + G.consts.BOSS_H); grp.rotation.z = gr.sock.theta * Math.PI / 180; model.add(grp); });
     model.add(...G.phoneGroup(phone, mats).children);
     model.rotation.set(-Math.PI / 2, 0, 0); v.ground.position.y = -10;
-    setD({ rs: base.fingers.middle.rs, ring: base.fingers.middle.ring, vol: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, gap: Math.abs(socks[0].y - socks[1].y) });
+    setD({ rs: base.fingers.middle.rs, vol: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, gap: Math.abs(socks[0].y - socks[1].y) });
     v.invalidate();
   }, [w, style]);
   return (
@@ -51,7 +52,7 @@ function Lab() {
         </div>
         <div className="readouts">
           <div className="ro"><span>Raio da sela</span><b>{fmt(d.rs || 10, 1)}<small>mm</small></b></div>
-          <div className="ro"><span>Anel Ø</span><b>{fmt(d.ring || 20, 1)}<small>mm</small></b></div>
+          <div className="ro"><span>Massa das pegas</span><b>{fmt((d.vol || 5) * 1.29, 1)}<small>g</small></b></div>
           <div className="ro"><span>Entre encaixes</span><b>{fmt(d.gap || 22, 1)}<small>mm</small></b></div>
           <div className="ro"><span>Volume das pegas</span><b>{fmt(d.vol || 5, 2)}<small>cm³</small></b></div>
         </div>
@@ -68,9 +69,9 @@ const MATS = [
 ];
 const COLORS = ['c-red', 'c-blue', 'c-violet', 'c-green'];
 const NEEDS = [
-  { img: 'treme', tag: 'Anel', c: 'c-violet', t: 'Quando a mão treme', d: 'O anel prende o telemóvel a um dedo. Se a mão treme ou perde força por um instante, o telemóvel fica onde está.', alt: 'Uma linha que treme passa por um anel azul e sai direita.' },
-  { img: 'dor', tag: 'Sela', c: 'c-red', t: 'Quando os dedos doem', d: 'Cada sela tem o raio do teu dedo e apoia-o em toda a largura, para segurares sem teres de apertar uma superfície lisa.', alt: 'Um dedo com três falanges apoiado em duas selas azuis.' },
-  { img: 'forca', tag: 'Prateleira', c: 'c-green', t: 'Quando falta força', d: 'O mindinho por baixo funciona como prateleira e sustenta o peso. Os outros dedos só têm de equilibrar.', alt: 'Telemóvel apoiado por baixo numa prateleira azul, o mindinho.' },
+  { img: 'treme', tag: 'Prateleira + selas', c: 'c-violet', t: 'Quando a mão treme', d: 'O mindinho por baixo sustenta o peso e cada dedo encaixa na sua sela. Seguro em quatro pontos, o telemóvel não escorrega com um tremor. Estamos a desenhar uma pega própria para tremor.' },
+  { img: 'dor', tag: 'Sela', c: 'c-red', t: 'Quando os dedos doem', d: 'Cada sela tem o raio do teu dedo e apoia-o em toda a largura, para segurares sem teres de apertar uma superfície lisa.' },
+  { img: 'forca', tag: 'Prateleira', c: 'c-green', t: 'Quando falta força', d: 'O mindinho por baixo funciona como prateleira e sustenta o peso. Os outros dedos só têm de equilibrar.' },
 ];
 
 export default function Home() {
@@ -80,6 +81,8 @@ export default function Home() {
       .then(({ data }) => setListings(data || []));
   }, []);
   useReveal();
+  const loc = useLocation();
+  useEffect(() => { if (!loc.hash) return; const t = setTimeout(() => document.querySelector(loc.hash)?.scrollIntoView(), 80); return () => clearTimeout(t); }, [loc.hash]);
   return (
     <>
       <section className="hero">
@@ -105,6 +108,7 @@ export default function Home() {
           <a className="chip-link" href="#feito-contigo"><Icon n="forum" />Feito contigo</a>
           <a className="chip-link" href="#porque"><Icon n="lightbulb" />Porquê</a>
           <a className="chip-link" href="#laboratorio"><Icon n="3d_rotation" />Experimentar</a>
+          <a className="chip-link" href="#em-breve"><Icon n="new_releases" />Em breve</a>
           <Link className="chip-link" to="/loja"><Icon n="storefront" />Loja</Link>
         </nav>
         <div className="explore"><span>Explorar</span><Icon n="arrow_downward" size={20} /></div>
@@ -249,6 +253,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Roadmap page="home" />
 
       <section className="wrap cta-final reveal">
         <h2>A tua mão é a medida.</h2>

@@ -31,7 +31,7 @@ export default function Shop() {
         <p>Pegas e capas pensadas para situações concretas. Escolhe o que é difícil para ti e mostramos o que pode ajudar. Para pegas com as tuas medidas exatas, <Link to="/configurar">usa o configurador</Link>, ou <Link to="/feito-contigo">fala connosco</Link>.</p>
       </div>
       <div className="need-filter" role="group" aria-label="Para quem">
-        {[['todos', 'Para todas as mãos', 'front_hand'], ['tremor', 'A mão treme', 'radio_button_unchecked'], ['dor', 'Os dedos doem', 'swipe'], ['forca', 'Falta força', 'back_hand']].map(([v, t, ic]) => (
+        {[['todos', 'Para todas as mãos', 'front_hand'], ['tremor', 'A mão treme', 'vibration'], ['dor', 'Os dedos doem', 'swipe'], ['forca', 'Falta força', 'back_hand']].map(([v, t, ic]) => (
           <button key={v} className={`need-chip ${para === v ? 'on' : ''}`} aria-pressed={para === v} onClick={() => set('para', v)}><Icon n={para === v ? 'check' : ic} size={20} />{t}</button>))}
       </div>
       <div className="toolbar">
