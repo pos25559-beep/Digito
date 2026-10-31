@@ -25,21 +25,22 @@ const IP17PM_FEAT = [
   F('R', 'btn', 55.53, 17.70), F('R', 'cc', 111.82, 17.10),
   F('B', 'port', 38.99, 12.45), F('B', 'spk', 21.04, 11.26), F('B', 'mic', 47.0, 3.0), F('B', 'spk', 57.69, 9.76)
 ];
-// iPhone 17 Pro — desenho oficial (Apple, 2025-09-09)
+// iPhone 17 Pro — desenho oficial (Apple, 2025-09-09); o desenho do 18 Pro (2026) tem as mesmas cotas
 const IP17P_FEAT = [
   F('L', 'btn', 34.28, 6.90), F('L', 'btn', 48.43, 11.20), F('L', 'btn', 62.63, 11.20),
   F('R', 'btn', 55.53, 17.70), F('R', 'cc', 98.40, 17.10),
   F('B', 'port', 35.92, 12.45), F('B', 'spk', 19.9, 9.0), F('B', 'mic', 42.8, 3.0), F('B', 'spk', 52.6, 8.0)
 ];
-const scaleFeat = (feat, kL, kW) => feat.map(f => ({ ...f, at: +(f.at * ((f.edge === 'L' || f.edge === 'R') ? kL : kW)).toFixed(2) }));
+// iPhone 16/16 Pro/17/Air — botões da esquerda (desenhos oficiais Apple): Ação, volume +, volume −
+const SIDE_BASE = [F('L', 'btn', 34.08, 6.90), F('L', 'btn', 48.23, 11.20), F('L', 'btn', 62.43, 11.20)];
 
 export const PHONES = {
   // ---------------- Apple ----------------
-  IPHONE_18_PRO_MAX: { name: 'iPhone 18 Pro Max', brand: 'Apple', year: 2026, src: 'derivado', from: 'iPhone 17 Pro Max',
-    L: 163.4, W: 78.0, T: 8.75, mass: 249, r: 12.0, bump: 4.43, plateau: 2.55, camLeft: 1.6, camTop: 1.6, camW: 74.8, camH: 42.4, camR: 12.0,
+  IPHONE_18_PRO_MAX: { name: 'iPhone 18 Pro Max', brand: 'Apple', year: 2026, src: 'desenho',
+    L: 163.43, W: 77.98, T: 8.75, mass: 249, r: 12.0, bump: 4.43, plateau: 2.55, camLeft: 1.6, camTop: 1.6, camW: 74.8, camH: 42.4, camR: 12.0,
     features: IP17PM_FEAT },
-  IPHONE_18_PRO: { name: 'iPhone 18 Pro', brand: 'Apple', year: 2026, src: 'derivado', from: 'iPhone 17 Pro',
-    L: 150.0, W: 71.9, T: 8.75, mass: 211, r: 11.0, bump: 4.43, plateau: 2.55, camLeft: 1.6, camTop: 1.6, camW: 68.7, camH: 39.0, camR: 11.5,
+  IPHONE_18_PRO: { name: 'iPhone 18 Pro', brand: 'Apple', year: 2026, src: 'desenho',
+    L: 150.01, W: 71.85, T: 8.75, mass: 211, r: 11.0, bump: 4.43, plateau: 2.55, camLeft: 1.6, camTop: 1.6, camW: 68.7, camH: 39.0, camR: 11.5,
     features: IP17P_FEAT },
   IPHONE_17_PRO_MAX: { name: 'iPhone 17 Pro Max', brand: 'Apple', year: 2025, src: 'desenho',
     L: 163.43, W: 77.98, T: 8.75, mass: 231, r: 12.0, bump: 4.43, plateau: 2.55, camLeft: 1.6, camTop: 1.6, camW: 74.8, camH: 42.4, camR: 12.0,
@@ -47,23 +48,27 @@ export const PHONES = {
   IPHONE_17_PRO: { name: 'iPhone 17 Pro', brand: 'Apple', year: 2025, src: 'desenho',
     L: 150.01, W: 71.85, T: 8.75, mass: 204, r: 11.0, bump: 4.43, plateau: 2.55, camLeft: 1.6, camTop: 1.6, camW: 68.7, camH: 39.0, camR: 11.5,
     features: IP17P_FEAT },
-  IPHONE_AIR: { name: 'iPhone Air', brand: 'Apple', year: 2025, src: 'estimado',
-    L: 156.2, W: 74.7, T: 5.64, mass: 165, r: 11.5, bump: 1.3, plateau: 1.3, camLeft: 1.6, camTop: 1.6, camW: 71.5, camH: 21.0, camR: 9.0,
-    features: [...scaleFeat(IP17P_FEAT.filter(f => f.edge !== 'B'), 156.2 / 150.01, 1), F('B', 'port', 37.35, 12.45), F('B', 'spk', 22.0, 9.0), F('B', 'mic', 46.0, 3.0)] },
-  IPHONE_17: { name: 'iPhone 17', brand: 'Apple', year: 2025, src: 'estimado',
-    L: 149.6, W: 71.5, T: 7.95, mass: 177, r: 10.5, bump: 1.35, camLeft: 6.5, camTop: 6.5, camW: 21.0, camH: 40.0, camR: 10.0,
-    features: [F('L', 'btn', 31.0, 6.9), F('L', 'btn', 44.5, 11.0), F('L', 'btn', 58.0, 11.0), F('R', 'btn', 51.0, 16.5), F('R', 'cc', 100.0, 17.1),
-      F('B', 'port', 35.75, 12.45), F('B', 'spk', 20.0, 9.0), F('B', 'mic', 42.5, 3.0), F('B', 'spk', 51.5, 8.0)] },
-  IPHONE_16_PRO_MAX: { name: 'iPhone 16 Pro Max', brand: 'Apple', year: 2024, src: 'estimado',
-    L: 163.0, W: 77.6, T: 8.25, mass: 227, r: 11.0, bump: 4.0, camW: 39.5, camH: 41.0, camR: 9.5, camTop: 5.5, camLeft: 5.5,
-    features: scaleFeat(IP17PM_FEAT, 163.0 / 163.43, 77.6 / 77.98) },
-  IPHONE_16_PRO: { name: 'iPhone 16 Pro', brand: 'Apple', year: 2024, src: 'estimado',
-    L: 149.6, W: 71.5, T: 8.25, mass: 199, r: 10.0, bump: 4.0, camW: 37.0, camH: 38.5, camR: 9.0, camTop: 5.2, camLeft: 5.2,
-    features: scaleFeat(IP17P_FEAT, 149.6 / 150.01, 71.5 / 71.85) },
-  IPHONE_16: { name: 'iPhone 16', brand: 'Apple', year: 2024, src: 'estimado',
-    L: 147.6, W: 71.6, T: 7.8, mass: 170, r: 10.5, bump: 1.6, camLeft: 6.5, camTop: 6.5, camW: 20.0, camH: 38.0, camR: 9.5,
-    features: [F('L', 'btn', 30.5, 6.9), F('L', 'btn', 44.0, 11.0), F('L', 'btn', 57.0, 11.0), F('R', 'btn', 50.0, 16.5), F('R', 'cc', 98.0, 17.1),
-      F('B', 'port', 35.8, 12.45), F('B', 'spk', 20.0, 9.0), F('B', 'mic', 42.5, 3.0), F('B', 'spk', 51.5, 8.0)] },
+  IPHONE_AIR: { name: 'iPhone Air', brand: 'Apple', year: 2025, src: 'desenho',
+    L: 156.18, W: 74.70, T: 5.64, mass: 165, r: 11.5, bump: 5.68, plateau: 3.03, camLeft: 1.6, camTop: 1.6, camW: 71.5, camH: 30.0, camR: 9.0,
+    features: [...SIDE_BASE, F('R', 'btn', 55.33, 17.80), F('R', 'cc', 104.77, 17.10),
+      F('B', 'mic', 25.3, 2.0), F('B', 'port', 37.35, 12.45), F('B', 'spk', 48.5, 3.6)] },
+  IPHONE_17: { name: 'iPhone 17', brand: 'Apple', year: 2025, src: 'desenho',
+    L: 149.61, W: 71.45, T: 7.95, mass: 177, r: 10.5, bump: 3.45, plateau: 1.78, camLeft: 3.97, camTop: 3.97, camW: 29.6, camH: 39.8, camR: 9.6,
+    features: [...SIDE_BASE, F('R', 'btn', 55.32, 17.70), F('R', 'cc', 98.20, 17.10),
+      F('B', 'mic', 21.97, 6.5), F('B', 'port', 35.72, 12.45), F('B', 'spk', 51.74, 10.4)] },
+  IPHONE_16_PRO_MAX: { name: 'iPhone 16 Pro Max', brand: 'Apple', year: 2024, src: 'desenho',
+    L: 163.03, W: 77.58, T: 8.25, mass: 227, r: 11.0, bump: 4.0, camLeft: 4.70, camTop: 4.70, camW: 40.5, camH: 41.8, camR: 9.5,
+    features: [...SIDE_BASE, F('R', 'btn', 55.33, 17.70), F('R', 'cc', 111.62, 17.10),
+      F('B', 'spk', 24.4, 8.5), F('B', 'port', 38.79, 12.45), F('B', 'mic', 47.5, 3.0), F('B', 'spk', 57.0, 10.0)] },
+  IPHONE_16_PRO: { name: 'iPhone 16 Pro', brand: 'Apple', year: 2024, src: 'desenho',
+    L: 149.61, W: 71.45, T: 8.25, mass: 199, r: 10.0, bump: 4.0, camLeft: 4.70, camTop: 4.70, camW: 40.5, camH: 41.8, camR: 9.5,
+    features: [...SIDE_BASE, F('R', 'btn', 55.33, 17.70), F('R', 'cc', 98.19, 17.10),
+      F('B', 'spk', 23.7, 8.0), F('B', 'port', 35.72, 12.45), F('B', 'mic', 44.5, 3.0), F('B', 'spk', 51.9, 8.7)] },
+  IPHONE_16: { name: 'iPhone 16', brand: 'Apple', year: 2024, src: 'desenho',
+    L: 147.6, W: 71.60, T: 7.81, mass: 170, r: 10.5, bump: 3.48, plateau: 1.85, camLeft: 3.97, camTop: 3.97, camW: 29.6, camH: 39.8, camR: 9.6,
+    features: [...SIDE_BASE, F('R', 'btn', 55.33, 17.70), F('R', 'cc', 96.23, 17.10),
+      F('B', 'mic', 21.9, 6.5), F('B', 'port', 35.81, 12.45), F('B', 'spk', 51.8, 10.4)] },
+
   // ---------------- Samsung ----------------
   GALAXY_S26_ULTRA: { name: 'Galaxy S26 Ultra', brand: 'Samsung', year: 2026, src: 'estimado',
     L: 163.6, W: 78.1, T: 7.9, mass: 214, r: 4.5, bump: 2.2, camLeft: 6.5, camTop: 7.0, camW: 24.0, camH: 56.0, camR: 12.0,

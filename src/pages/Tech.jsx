@@ -119,8 +119,8 @@ export default function Tech() {
       <section className="wrap tech-sec" id="configurador">
         <div className="band-head reveal"><h2>Medidas reais de cada telemóvel</h2><p>O configurador conhece os botões, portas, microfones e altifalantes de cada modelo, e a forma real de cada pega.</p></div>
         <div className="tech-stats">
-          <div className="tstat reveal"><span className="tstat-k">Desenhos oficiais</span><b>2</b><p>iPhone 17 Pro e 17 Pro Max, com as cotas do desenho dimensional da Apple. Os iPhone 18 Pro herdam-nas (mesmas dimensões).</p></div>
-          <div className="tstat reveal"><span className="tstat-k">Modelos</span><b>15</b><p>Apple, Samsung e Google. Nos modelos estimados, confirmamos os botões no teu telemóvel antes de imprimir.</p></div>
+          <div className="tstat reveal"><span className="tstat-k">Desenhos oficiais</span><b>9</b><p>Todos os iPhone do catálogo, do 16 ao 18 Pro Max, com as cotas dos desenhos dimensionais da Apple: botões, portas, microfones e câmara.</p></div>
+          <div className="tstat reveal"><span className="tstat-k">Modelos</span><b>15</b><p>Apple, Samsung e Google. Nos Samsung e Pixel, ainda estimados, confirmamos os botões no teu telemóvel antes de imprimir.</p></div>
           <div className="tstat reveal"><span className="tstat-k">Pegas sobrepostas</span><b>0</b><p>Cada combinação de mão, telemóvel e pegas é verificada. Os vincos laterais nunca passam por cima de um botão.</p></div>
         </div>
       </section>
