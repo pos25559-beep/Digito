@@ -914,3 +914,6 @@ details.more .pk { margin-top: 8px; width: 100%; }
 .sec-phone { fill: #3c4043; } .sec-tpu { fill: #c9ccd1; } .sec-ins { fill: #8ab4f8; } .sec-plug { fill: #1a73e8; }
 .sec-t { font: 12px var(--f-text, system-ui); fill: var(--ink-2); }
 .sec-t.inv { fill: #fff; }
+.boundary { margin: 24px auto; max-width: 560px; padding: 20px 24px; border: 1px solid var(--line, #dadce0); border-radius: 16px; background: var(--paper, #fff); }
+.boundary b { display: block; font-size: 1.05rem; }
+.boundary p { margin: 6px 0 12px; color: var(--ink-2, #5f6368); }

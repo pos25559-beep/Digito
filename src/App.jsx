@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav.jsx';
 import Footer from './components/Footer.jsx';
 import { Spinner } from './components/ui.jsx';
+import Boundary from './components/Boundary.jsx';
 import Home from './pages/Home.jsx';
 const Shop = lazy(() => import('./pages/Shop.jsx'));
 const Listing = lazy(() => import('./pages/Listing.jsx'));
@@ -29,7 +30,7 @@ export default function App() {
     <>
       <Nav />
       <main id="main">
-        <Suspense fallback={<Spinner />}>
+        <Boundary resetKey={loc.pathname}><Suspense fallback={<Spinner />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/loja" element={<Shop />} />
@@ -52,7 +53,7 @@ export default function App() {
             <Route path="/ajuda" element={<Help />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </Suspense>
+        </Suspense></Boundary>
       </main>
       {!bare && <Footer />}
     </>

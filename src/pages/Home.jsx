@@ -7,6 +7,7 @@ import * as G from '../lib/geometry.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
 import { fmt, eur } from '../lib/pricing.js';
 import { HIGHLIGHTS } from '../lib/why.js';
+import Boundary from '../components/Boundary.jsx';
 import { Icon, Range, useReveal, reducedMotion, AutoVideo, Photo, StepVideo } from '../components/ui.jsx';
 import LockAnim from '../components/LockAnim.jsx';
 import { PHOTOS } from '../lib/photos.js';
@@ -28,13 +29,14 @@ function Lab() {
     const base = E.estimateHand({ heightCm: 172 }); const k = w / base.fingers.middle.w;
     E.FINGERS.forEach(f => { base.fingers[f] = E.fingerRecord(base.fingers[f].w * k, base.fingers[f].d * k); });
     const socks = E.sockets(base, phone, style, ['sela', 'sela', 'sela', 'sela']); const imp = E.impact({ phone, h: 1.2 });
-    const b = G.build({ phone, socks, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner });
+    const groove = E.sideGrooves(base, phone, style === 'SIDE_GRIP');
+    const b = G.build({ phone, socks, types: socks.map(() => 'sela'), gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner, groove });
     disposeGroup(model);
     b.caseParts.forEach(g => model.add(meshOf(g, mats.case))); b.inserts.forEach(g => model.add(meshOf(g, gm)));
     b.grips.forEach(gr => { const grp = new THREE.Group(); gr.parts.forEach(g => grp.add(meshOf(g, gm))); grp.position.set(gr.sock.x, gr.sock.y, G.consts.GRIP_Z); grp.rotation.z = gr.sock.theta * Math.PI / 180; model.add(grp); });
     model.add(...G.phoneGroup(phone, mats).children);
     model.rotation.set(-Math.PI / 2, 0, 0); v.ground.position.y = -10;
-    setD({ rs: base.fingers.middle.rs, vol: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, gap: Math.abs(socks[0].y - socks[1].y) });
+    setD({ rs: base.fingers.middle.rs, vol: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, gap: socks.length > 1 ? Math.abs(socks[0].y - socks[1].y) : null });
     v.invalidate();
   }, [w, style]);
   return (
@@ -53,7 +55,7 @@ function Lab() {
         <div className="readouts">
           <div className="ro"><span>Raio da sela</span><b>{fmt(d.rs || 10, 1)}<small>mm</small></b></div>
           <div className="ro"><span>Massa das pegas</span><b>{fmt((d.vol || 5) * 1.29, 1)}<small>g</small></b></div>
-          <div className="ro"><span>Entre encaixes</span><b>{fmt(d.gap || 22, 1)}<small>mm</small></b></div>
+          <div className="ro"><span>Entre encaixes</span><b>{d.gap == null ? '—' : fmt(d.gap, 1)}{d.gap == null ? null : <small>mm</small>}</b></div>
           <div className="ro"><span>Volume das pegas</span><b>{fmt(d.vol || 5, 2)}<small>cm³</small></b></div>
         </div>
         <Link to="/configurar" className="key key-dark lab-cta">Configurar com as minhas medidas <Icon n="arrow_forward" size={20} /></Link>
@@ -216,7 +218,7 @@ export default function Home() {
       <section className="band" id="laboratorio">
         <div className="wrap">
           <div className="band-head reveal"><h2>Experimenta antes de medir</h2><p>Este modelo é gerado pelo mesmo algoritmo que cria os ficheiros de impressão.</p></div>
-          <Lab />
+          <Boundary title="O modelo 3D não carregou."><Lab /></Boundary>
         </div>
       </section>
 
