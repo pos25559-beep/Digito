@@ -77,7 +77,7 @@ export default function Listing() {
           <table className="spec-table"><tbody>
             {l.material && <tr><th>Material</th><td>{l.material}</td></tr>}
             {l.process && <tr><th>Processo</th><td>{l.process}</td></tr>}
-            <tr><th>Encaixe</th><td><span className="mono">hex 10 mm · íman Ø6×2</span> <Link to="/tecnologia" className="hint">Novo encaixe em validação</Link></td></tr>
+            <tr><th>Encaixe</th><td><span className="mono">DÍGITO Lock v3 · rente às costas</span> <Link to="/tecnologia" className="hint">Em validação</Link></td></tr>
             {phones.length > 0 && <tr><th>Telemóveis</th><td>{phones.join(', ')}</td></tr>}
             <tr><th>Vendidos</th><td className="mono">{l.sales_count}</td></tr>
           </tbody></table>

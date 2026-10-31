@@ -1,13 +1,15 @@
 /* DÍGITO — gerador paramétrico (capa + pegas + telemóvel). mm, vista traseira: x→direita, y→cima, z→para fora das costas. */
 import * as THREE from 'three';
 import * as E from './engine.js';
+import { LK, D2R, arcPts, sectorXY, insertOutlineXY, solidSectors, armXY } from './lock.js';
+export { lockPlan } from './lock.js';
 const GAP = 0.10;           // folga entre telemóvel e parede interior (TPU, ligeiro aperto)
-const BACK = 3.0;           // espessura da placa traseira: 0,8 interior + 1,0 média + 1,2 exterior (alvéolos)
-const L_IN = 0.8, L_MID = 1.0, L_OUT = 1.2;
-const BOSS_H = 1.5, BOSS_R = 9.0;
-const HEX_AF = 10.0;        // abertura do encaixe hexagonal (entre faces)
-const PLUG_H = 2.6;         // altura do macho hexagonal da pega
-const MAG_D = 6.2, MAG_H = 2.1; // sede do íman Ø6×2 (N42)
+const BACK = 3.2;           // traseira lisa: 0,8 interior + 1,2 média + 0,6 exterior + 0,6 de acabamento. O DÍGITO Lock v3 fica rente.
+const L_IN = 0.8, L_MID = 1.2, L_OUT = 0.6, L_FIN = 0.6;
+const BOSS_H = 0, BOSS_R = 9.4;
+const GRIP_Z = BACK + LK.push;          // base da pega (assenta no topo do insert)
+const PLUG_H = GRIP_Z - LK.z_lug0;      // 3,05: o macho desce da base da pega até 0,3 mm do telemóvel
+const HEX_AF = 10.0, MAG_D = 6.2, MAG_H = 2.1;   // (encaixe antigo; já não é usado)
 const LIP_H = 1.0, LIP_IN = 1.0;
 const smooth = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
 
@@ -68,7 +70,7 @@ function extrude(shape, z0, depth, curveSegments = 24) {
 }
 
 /* ---------- parede: perfil varrido ao longo do contorno (lóbulos de canto + cortes em U) ---------- */
-function wallGeometry(phone, tSide, tCorner) {
+function wallGeometry(phone, tSide, tCorner, groove = null) {
   const N = 360;
   const { pts, P } = roundedRect(phone.W, phone.L, phone.r, N);
   const T = phone.T, zTop = BACK, zBot = -(T + LIP_H), H = zTop - zBot;
@@ -76,9 +78,10 @@ function wallGeometry(phone, tSide, tCorner) {
   const nz = 10;
   const notchK = pts.map(p => {
     let k = 0;
-    phone.notches.forEach(n => {
+    E.cutsOf(phone).forEach(n => {
       let along, on;
       if (n.side === 'bottom') { on = p.ny < -0.7; along = p.x; }
+      else if (n.side === 'top') { on = p.ny > 0.7; along = p.x; }
       else if (n.side === 'right') { on = p.nx > 0.7; along = p.y; }
       else { on = p.nx < -0.7; along = p.y; }
       if (!on) return;
@@ -88,10 +91,20 @@ function wallGeometry(phone, tSide, tCorner) {
     return k;
   });
   const zCut = -1.4; // fundo do corte em U (mm abaixo das costas do telemóvel)
+  // vincos laterais: o lado dos dedos engrossa GROOVE.EXTRA e cada vinco (cosseno) tira GROOVE.DEPTH a meia altura
+  const gside = pts.map(p => {
+    if (!groove || !groove.grooves.length) return { extra: 0, cut: 0 };
+    const on = groove.side > 0 ? p.nx > 0.7 : p.nx < -0.7; if (!on) return { extra: 0, cut: 0 };
+    const ends = groove.grooves.reduce((o, g) => [Math.min(o[0], g.y - g.w / 2 - 6), Math.max(o[1], g.y + g.w / 2 + 6)], [Infinity, -Infinity]);
+    const ramp = smooth(ends[0], ends[0] + 6, p.y) * (1 - smooth(ends[1] - 6, ends[1], p.y));   // engrossa só na zona dos vincos
+    let cut = 0; groove.grooves.forEach(g => { const u = Math.abs(p.y - g.y) / (g.w / 2); if (u < 1) cut = Math.max(cut, 0.5 * (1 + Math.cos(Math.PI * u))); });
+    return { extra: E.GROOVE.EXTRA * ramp, cut: E.GROOVE.DEPTH * cut };
+  });
   const tw = (i, z) => {
     const psi = E.cornerPsi(pts[i].dc);
     const phi = Math.pow(Math.max(0, Math.sin(Math.PI * (zTop - z) / H)), 0.6);
-    return tSide + (tCorner - tSide) * psi * phi;
+    const gs = gside[i]; const band = Math.pow(Math.max(0, Math.sin(Math.PI * (zTop - z) / H)), 1.4);
+    return tSide + (tCorner - tSide) * psi * phi + gs.extra * Math.min(1, 1.6 * band) - gs.cut * band;
   };
   const profile = i => {
     const pr = [];
@@ -133,43 +146,78 @@ function wallGeometry(phone, tSide, tCorner) {
   return { geom: g, pts, cornerVol: vLobe / 4 };
 }
 
-/* ---------- placa traseira, alvéolos, bossas dos encaixes e proteção da câmara ---------- */
-function backGeometries(phone, socks, pts) {
+function placeXY(xy, s) { const c = Math.cos(s.theta * D2R), sn = Math.sin(s.theta * D2R); return xy.map(([x, y]) => [s.x + x * c - y * sn, s.y + x * sn + y * c]); }
+/** insert v3 (PETG) de um encaixe, em coordenadas do mundo: lista de extrusões (sólidos sobrepostos, como numa união) */
+function insertGeoms(s) {
+  const P = xy => polyPath(placeXY(xy, s), false);
+  const ring = polyPath(placeXY(insertOutlineXY(), s), false); ring.holes.push(polyPath(placeXY(arcPts(LK.r_ring_i, 0, 360, 120).slice(0, -1), s), true));
+  const out = [extrude(ring, 0, BACK, 4)];
+  const sol = solidSectors();
+  sol.forEach(([a0, a1]) => {
+    out.push(extrude(P(sectorXY(LK.r_ch, LK.r_ring_i + 0.01, a0, a1)), 0, LK.z_lug1, 4));          // parede por baixo da aba
+    out.push(extrude(P(sectorXY(LK.r_bore, LK.r_ring_i + 0.01, a0, a1)), LK.z_lug1, BACK - LK.z_lug1, 4)); // aba
+    out.push(extrude(P(sectorXY(LK.r_lug - 0.6, LK.r_ch + 0.01, a1 - LK.stop, a1)), 0, LK.z_lug1, 4));   // batente
+  });
+  LK.keyTabs.forEach(([ka, kb]) => out.push(extrude(P(sectorXY(LK.r_bore, LK.r_lug, ka - 0.5, kb + 0.5)), LK.z_lug1 + 0.15, BACK - LK.z_lug1 - 0.15, 4)));
+  const ends = Object.fromEntries(LK.lugs.map((E, i) => [E, sol[i][1]]));
+  const order = [...LK.lugs].sort((p, q) => p - q);
+  order.forEach((E, i) => {
+    const prev = order[(i - 1 + order.length) % order.length]; const root = prev < E ? ends[prev] : ends[prev] - 360;
+    out.push(extrude(P(armXY(E, root)), 0, LK.arm_h, 4));
+    out.push(extrude(P(sectorXY(LK.r_ch, LK.r_ring_i + 0.01, root - 0.01, root + 3)), 0, LK.arm_h, 4));
+  });
+  return out;
+}
+
+/* ---------- placa traseira (rente ao encaixe), acabamento e proteção da câmara ---------- */
+function backGeometries(phone, socks, pts, finish = 'liso') {
   const cb = E.camBox(phone), m = 1.2;
   const camHole = () => rrPath((cb.xmin + cb.xmax) / 2, (cb.ymin + cb.ymax) / 2, phone.camW + 2 * m, phone.camH + 2 * m, phone.camR + m, true);
-  const s1 = shapeFromPts(pts, GAP - 0.6); s1.holes.push(camHole());
-  const g1 = extrude(s1, 0, L_IN);
-  const s2 = shapeFromPts(pts, GAP - 0.6); s2.holes.push(camHole());
-  socks.forEach(s => s2.holes.push(circlePath(s.x, s.y, MAG_D / 2, true)));
-  const g2 = extrude(s2, L_IN, L_MID);
-  const s3 = shapeFromPts(pts, GAP - 0.6); s3.holes.push(camHole());
-  socks.forEach(s => s3.holes.push(hexPath(s.x, s.y, HEX_AF, s.theta * Math.PI / 180, true)));
-  // alvéolos hexagonais 2,5D (R = 3,0 mm, passo 7,27 mm)
-  const R = 3.0, pitch = 7.27, inset = 5.0 + R;
-  const inside = (x, y) => { // SDF do retângulo arredondado
-    const rr = phone.r, qx = Math.abs(x) - (phone.W / 2 - rr), qy = Math.abs(y) - (phone.L / 2 - rr);
-    const sd = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr;
-    return sd < -inset;
-  };
+  const pocket = s => polyPath(placeXY(insertOutlineXY(0.02), s), true);
+  const layer = (z0, h, extra) => { const sh = shapeFromPts(pts, GAP - 0.6); sh.holes.push(camHole()); socks.forEach(s => sh.holes.push(pocket(s))); if (extra) extra(sh); return extrude(sh, z0, h, 12); };
+  const parts = [layer(0, L_IN), layer(L_IN, L_MID), layer(L_IN + L_MID, L_OUT)];
+  // acabamento das costas (0,6 mm de cima): longe dos encaixes, da câmara e da borda
+  const inset = 5.5;
+  const sd = (x, y, grow = 0) => { const rr = phone.r, qx = Math.abs(x) - (phone.W / 2 - rr), qy = Math.abs(y) - (phone.L / 2 - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr - grow; };
+  const camGuardPad = 1.6 + 2.0;
+  const free = (x, y, rad) => sd(x, y) < -(inset + rad)
+    && !(x > cb.xmin - m - camGuardPad - rad && x < cb.xmax + m + camGuardPad + rad && y > cb.ymin - m - camGuardPad - rad && y < cb.ymax + m + camGuardPad + rad)
+    && !socks.some(s => Math.hypot(x - s.x, y - s.y) < LK.r_out + LK.key_out + 2.2 + rad);
   let cells = 0;
-  for (let row = -14; row <= 14; row++) for (let col = -8; col <= 8; col++) {
-    const x = col * pitch + (row & 1 ? pitch / 2 : 0), y = row * pitch * Math.sqrt(3) / 2;
-    if (!inside(x, y)) continue;
-    if (x > cb.xmin - m - R - 2.5 && x < cb.xmax + m + R + 2.5 && y > cb.ymin - m - R - 2.5 && y < cb.ymax + m + R + 2.5) continue;
-    if (socks.some(s => Math.hypot(x - s.x, y - s.y) < BOSS_R + R + 1.5)) continue;
-    s3.holes.push(hexPath(x, y, R * Math.sqrt(3), 0, true)); cells++;
-  }
-  const g3 = extrude(s3, L_IN + L_MID, L_OUT, 12);
-  const bosses = socks.map(s => {
-    const sh = circlePath(s.x, s.y, BOSS_R, false); sh.holes.push(hexPath(s.x, s.y, HEX_AF, s.theta * Math.PI / 180, true));
-    return extrude(sh, BACK, BOSS_H, 40);
-  });
-  // proteção elevada à volta da câmara (bump + 0,8 mm)
+  parts.push(layer(L_IN + L_MID + L_OUT, L_FIN, sh => {
+    if (finish === 'favo') {
+      const R = 3.0, pitch = 7.27;
+      for (let row = -16; row <= 16; row++) for (let col = -8; col <= 8; col++) {
+        const x = col * pitch + (row & 1 ? pitch / 2 : 0), y = row * pitch * Math.sqrt(3) / 2;
+        if (free(x, y, R)) { sh.holes.push(hexPath(x, y, R * Math.sqrt(3), 0, true)); cells++; }
+      }
+    } else if (finish === 'canelado') {
+      const pitch = 3.2, wr = 0.7;                       // nervuras: ranhuras de 1,4 mm, passo 3,2 mm, ao comprido
+      for (let x = -phone.W / 2 + 4; x <= phone.W / 2 - 4; x += pitch) {
+        let y0 = null; const step = 1.0;
+        for (let y = -phone.L / 2; y <= phone.L / 2 + step; y += step) {
+          const ok = y <= phone.L / 2 && free(x, y, wr + 0.3);
+          if (ok && y0 === null) y0 = y;
+          if (!ok && y0 !== null) { const y1 = y - step; if (y1 - y0 > 6) { sh.holes.push(rrPath(x, (y0 + y1) / 2, 2 * wr, y1 - y0, wr, true, 4)); cells++; } y0 = null; }
+        }
+      }
+    } else if (finish === 'pontos') {
+      const pitch = 4.6, rd = 0.9;
+      for (let row = -24; row <= 24; row++) for (let col = -10; col <= 10; col++) {
+        const x = col * pitch + (row & 1 ? pitch / 2 : 0), y = row * pitch * 0.866;
+        if (free(x, y, rd)) { sh.holes.push(circlePath(x, y, rd, true, 10)); cells++; }
+      }
+    }
+  }));
+  // proteção elevada à volta da câmara (vidro das lentes + 0,8 mm), só se a câmara sair acima das costas
   const gh = phone.bump - BACK + 0.8;
-  const gs = rrPath((cb.xmin + cb.xmax) / 2, (cb.ymin + cb.ymax) / 2, phone.camW + 2 * m + 3.2, phone.camH + 2 * m + 3.2, phone.camR + m + 1.6, false);
-  gs.holes.push(camHole());
-  const guard = extrude(gs, BACK, gh);
-  return { parts: [g1, g2, g3, guard, ...bosses], cells };
+  if (gh > 0.3) {
+    const gs = rrPath((cb.xmin + cb.xmax) / 2, (cb.ymin + cb.ymax) / 2, phone.camW + 2 * m + 3.2, phone.camH + 2 * m + 3.2, phone.camR + m + 1.6, false);
+    gs.holes.push(camHole());
+    parts.push(extrude(gs, BACK, gh));
+  }
+  const inserts = socks.map(s => insertGeoms(s));
+  return { parts, inserts, cells };
 }
 
 /* ---------- pegas ---------- */
@@ -194,19 +242,24 @@ function podBody(Lp, Wp, heightFn, edgeH = null, fillet = 0.12) {
   if (signedVolume(g) < 0) flip(g);
   g.computeVertexNormals(); return g;
 }
-function plugGeometries(c) {
-  const af = HEX_AF - 2 * c;
-  const s1 = hexPath(0, 0, af, 0, false); s1.holes.push(circlePath(0, 0, MAG_D / 2, true));
-  const g1 = extrude(s1, -PLUG_H, MAG_H, 32);
-  const g2 = extrude(hexPath(0, 0, af, 0, false), -PLUG_H + MAG_H, PLUG_H - MAG_H);
-  return [g1, g2];
+/** macho do DÍGITO Lock v3, em coordenadas locais da pega (base da pega em z = 0; o macho desce até -PLUG_H).
+ *  As patilhas estão na posição bloqueada (E + 60°), a frente chanfrada em planta e a face de trás reta. */
+function plugGeometries() {
+  const core = extrude(circlePath(0, 0, LK.r_core, false, 72), -PLUG_H, PLUG_H + 0.02, 24);
+  const lugs = LK.lugs.map(E => {
+    const a = E + LK.turn, a0 = a - LK.half, a1 = a + LK.half;
+    const xy = [...arcPts(LK.r_core - 0.6, a0, a1), [ (LK.r_lug - 0.6) * Math.cos(a1 * D2R), (LK.r_lug - 0.6) * Math.sin(a1 * D2R) ], ...arcPts(LK.r_lug, a1 - 5, a0)];
+    return extrude(polyPath(xy, false), -PLUG_H, LK.z_lug1 - LK.z_lug0, 4);
+  });
+  return [core, ...lugs];
 }
-/** Gera as peças de uma pega em coordenadas locais (encaixe na origem, topo da bossa em z = 0). */
+/** Gera as peças de uma pega em coordenadas locais (centro do encaixe na origem, base da pega em z = 0). */
 export function gripParts(sock, type, mat) {
-  const c = E.MATERIALS[mat].c, w = sock.w;
-  const parts = plugGeometries(c);
+  const w = sock.w;
+  const parts = plugGeometries();
   let extra = null;
-  if (type === 'blank') {
+  if (type === 'blank') {   // tampa cega: disco fino que fecha o encaixe (fica 0,75 mm acima das costas)
+    parts.push(extrude(circlePath(0, 0, LK.r_out - 0.2, false, 72), 0, 0.6, 24));
     return { parts, extra, label: 'Tampa cega' };
   }
   if (type === 'ring') {
@@ -243,10 +296,14 @@ export function phoneGroup(phone, mats) {
   body.translate(0, 0, -phone.T + 0.5);
   g.add(new THREE.Mesh(body, mats.phone));
   const cb = E.camBox(phone), cx = (cb.xmin + cb.xmax) / 2, cy = (cb.ymin + cb.ymax) / 2;
-  const isl = new THREE.ExtrudeGeometry(rrPath(cx, cy, phone.camW, phone.camH, phone.camR, false), { depth: phone.bump - 0.6, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 3, curveSegments: 24 });
+  const isl = new THREE.ExtrudeGeometry(rrPath(cx, cy, phone.camW, phone.camH, phone.camR, false), { depth: Math.max(0.2, (phone.plateau || phone.bump) - 0.6), bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 3, curveSegments: 24 });
   g.add(new THREE.Mesh(isl, mats.phone));
-  const lr = Math.min(phone.camW, phone.camH) * 0.2;
-  const lenses = phone.camH > phone.camW * 0.8
+  // planalto de câmara a toda a largura (iPhone 17 Pro e seguintes, Air): lentes nas posições do desenho, medidas do canto superior esquerdo
+  const X0 = -phone.W / 2, Y0 = phone.L / 2;
+  const lr = phone.plateau ? 8.1 : Math.min(phone.camW, phone.camH) * 0.2;
+  const lenses = phone.plateau
+    ? (phone.camH > 30 ? [[X0 + 14.37, Y0 - 14.37], [X0 + 14.37, Y0 - 33.61], [X0 + 32.36, Y0 - 23.99]] : [[X0 + 12.5, Y0 - 11.5]])
+    : phone.camH > phone.camW * 0.8
     ? [[cb.xmin + phone.camW * 0.3, cb.ymax - phone.camH * 0.27], [cb.xmin + phone.camW * 0.3, cb.ymin + phone.camH * 0.27], [cb.xmin + phone.camW * 0.72, cy]]
     : [[cb.xmin + phone.camW * 0.2, cy], [cx, cy], [cb.xmin + phone.camW * 0.8, cy]];
   lenses.forEach(([x, y]) => {
@@ -260,9 +317,9 @@ export function phoneGroup(phone, mats) {
 
 /* ---------- montagem completa ---------- */
 export function build(cfg) {
-  const { phone, socks, types, gripMat, tSide, tCorner } = cfg;
-  const wall = wallGeometry(phone, tSide, tCorner);
-  const back = backGeometries(phone, socks, wall.pts);
+  const { phone, socks, types, gripMat, tSide, tCorner, finish = 'liso', groove = null } = cfg;
+  const wall = wallGeometry(phone, tSide, tCorner, groove);
+  const back = backGeometries(phone, socks, wall.pts, finish);
   const caseParts = [wall.geom, ...back.parts];
   const grips = socks.map((s, i) => {
     const gp = gripParts(s, types[i], gripMat);
@@ -271,7 +328,9 @@ export function build(cfg) {
   // volume da capa: parede + placa (as camadas sobrepostas são < 2 %; descontamos a sobreposição parede/placa)
   const overlap = (wall.pts.length ? 3.0 * BACK * perimeter(wall.pts) : 0) * 0.6;
   const caseVol = caseParts.reduce((v, g) => v + Math.abs(signedVolume(g)), 0) - overlap;
-  return { caseParts, grips, caseVol, cornerVol: wall.cornerVol, cells: back.cells };
+  const inserts = back.inserts.flat();
+  const insertVol = inserts.reduce((v, g) => v + Math.abs(signedVolume(g)), 0);
+  return { caseParts, inserts, insertVol, grips, caseVol, cornerVol: wall.cornerVol, cells: back.cells };
 }
 function perimeter(pts) { let p = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; p += Math.hypot(a.x - b.x, a.y - b.y); } return p; }
 export function signedVolume(g) {
@@ -307,4 +366,5 @@ export function toSTL(geoms, matrix) {
 }
 
 
-export const consts = { GAP, BACK, BOSS_H, HEX_AF, PLUG_H, MAG_D, MAG_H };
+export const consts = { GAP, BACK, BOSS_H, PLUG_H, GRIP_Z, LK };
+

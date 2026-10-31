@@ -134,7 +134,7 @@ const FAQ = [
   ['Como sei que as medidas estão certas?', 'No passo "Medir" do configurador tiras uma fotografia da mão com um cartão bancário ou de cidadão ao lado. O cartão tem 85,6 mm e serve de régua. Podes depois afinar cada dedo à décima de milímetro.'],
   ['Posso devolver um kit à medida?', 'Não por desistência, porque é fabricado para ti. Se tiver defeito ou não corresponder ao que encomendaste, voltamos a imprimir ou reembolsamos. Se o conforto não for o esperado, fala connosco: ajustar uma pega é rápido.'],
   ['Quanto tempo demora?', 'Até 10 dias úteis para produtos à medida e até 5 para produtos de catálogo, mais o envio. Vês o estado em A minha conta › Encomendas.'],
-  ['As pegas servem noutra capa?', 'Sim. O encaixe hexagonal é igual em todas as capas DÍGITO, por isso podes trocar de pegas sem trocar de capa.'],
+  ['As pegas servem noutra capa?', 'Sim. O encaixe DÍGITO Lock é igual em todas as capas DÍGITO, por isso podes trocar de pegas sem trocar de capa.'],
 ];
 
 export function Help() {

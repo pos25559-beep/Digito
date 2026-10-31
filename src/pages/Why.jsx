@@ -98,7 +98,7 @@ export default function Why() {
         </Sec>
 
         <Sec id="informatica" tag="Informática e interação" icon="memory" color="c-violet" title="O encaixe como porta de expansão">
-          <p className="big">Cada encaixe hexagonal da capa é uma ligação mecânica normalizada. Hoje recebe pegas. Amanhã pode receber botões.</p>
+          <p className="big">Cada encaixe DÍGITO Lock da capa é uma ligação mecânica normalizada. Hoje recebe pegas. Amanhã pode receber botões.</p>
           <div className="paths">
             <div className="path">
               <span className="path-n">1</span>

@@ -3,21 +3,9 @@ export const r2 = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const SIN72 = Math.sin(72 * Math.PI / 180);
 
-/* ---------- 1. Telemóveis suportados (dimensões em mm) ---------- */
-// notches: cortes em U do lado do ecrã, em coordenadas de vista traseira (x direita, y cima).
-// side: 'bottom' | 'left' | 'right'; c = centro ao longo do lado (mm); w = largura do corte (mm)
-export const PHONES = {
-  IPHONE_16_PRO_MAX: { name: 'iPhone 16 Pro Max', brand: 'Apple', L: 163.0, W: 77.6, T: 8.25, mass: 227, r: 11.0, bump: 4.0, camW: 39.5, camH: 41.0, camR: 9.5, camTop: 5.5, camLeft: 5.5,
-    notches: [{ side: 'bottom', c: 0, w: 34 }, { side: 'left', c: 28, w: 22 }, { side: 'right', c: 40, w: 46 }, { side: 'left', c: -22, w: 22 }] },
-  IPHONE_16_PRO: { name: 'iPhone 16 Pro', brand: 'Apple', L: 149.6, W: 71.5, T: 8.25, mass: 199, r: 10.0, bump: 4.0, camW: 37.0, camH: 38.5, camR: 9.0, camTop: 5.2, camLeft: 5.2,
-    notches: [{ side: 'bottom', c: 0, w: 32 }, { side: 'left', c: 24, w: 20 }, { side: 'right', c: 34, w: 42 }, { side: 'left', c: -20, w: 20 }] },
-  GALAXY_S23_ULTRA: { name: 'Galaxy S23 Ultra', brand: 'Samsung', L: 163.4, W: 78.1, T: 8.9, mass: 234, r: 3.8, bump: 3.8, camW: 36.0, camH: 54.0, camR: 6.0, camTop: 5.0, camLeft: 5.5,
-    notches: [{ side: 'bottom', c: 0, w: 40 }, { side: 'left', c: 32, w: 40 }] },
-  PIXEL_9_PRO_XL: { name: 'Pixel 9 Pro XL', brand: 'Google', L: 162.8, W: 76.6, T: 8.5, mass: 221, r: 10.2, bump: 4.1, camW: 67.6, camH: 25.0, camR: 12.0, camTop: 13.0, camLeft: 4.5,
-    notches: [{ side: 'bottom', c: 0, w: 34 }, { side: 'left', c: 22, w: 46 }] },
-  PIXEL_9_PRO: { name: 'Pixel 9 Pro', brand: 'Google', L: 152.8, W: 72.0, T: 8.5, mass: 199, r: 10.0, bump: 4.1, camW: 63.0, camH: 25.0, camR: 12.0, camTop: 13.0, camLeft: 4.5,
-    notches: [{ side: 'bottom', c: 0, w: 32 }, { side: 'left', c: 20, w: 42 }] }
-};
+/* ---------- 1. Telemóveis suportados: ver devices.js (medidas, botões, portas, origem das cotas) ---------- */
+import { PHONES, cutsOf } from './devices.js';
+export { PHONES, cutsOf };
 export function camBox(p) {
   const xmin = -0.5 * p.W + p.camLeft, ymax = 0.5 * p.L - p.camTop;
   return { xmin, xmax: xmin + p.camW, ymin: ymax - p.camH, ymax };
@@ -84,14 +72,15 @@ export function handFromLandmarks(lm, widths = {}, hand = 'RIGHT') {
 export const STYLES = {
   FULL_4_FINGER: { name: 'Quatro dedos atrás', desc: 'Os quatro dedos apoiam-se nas costas. A mais estável para ler e escrever.' },
   PINKY_SHELF: { name: 'Mindinho por baixo', desc: 'Três dedos atrás e o mindinho a servir de prateleira. A pega mais comum.' },
-  CAMERA_CLAW: { name: 'Modo câmara', desc: 'Pegas em diagonal, afastadas da câmara, para fotografar com uma mão.' }
+  CAMERA_CLAW: { name: 'Modo câmara', desc: 'Pegas em diagonal, afastadas da câmara, para fotografar com uma mão.' },
+  SIDE_GRIP: { name: 'Pela lateral', desc: 'Vincos à medida dos teus dedos na lateral da capa e o mindinho por baixo. Para quem segura pela borda.' }
 };
 /* ---------- 5b. Envelope das pegas e posicionamento sem colisões ----------
  * Cada pega tem uma "pegada" em planta (vista traseira), rodada pelo ângulo do encaixe.
  * O posicionamento desce os encaixes um a um até não haver sobreposição (folga ≥ GAP_GRIP),
  * respeita a proteção da câmara e o contorno da capa, e encolhe as selas antes de apertar os dedos.
  */
-export const LOCK = { BOSS_R: 9.0, GAP_GRIP: 0.8, GAP_BOSS: 0.6, CAM_CLEAR: 3.8, EDGE_IN: 1.5, RING_BAND: 3.0, RING_DEPTH: 5.0 };
+export const LOCK = { BOSS_R: 9.4, GAP_GRIP: 0.8, GAP_BOSS: 0.6, CAM_CLEAR: 3.8, EDGE_IN: 1.5, RING_BAND: 3.0, RING_DEPTH: 5.0 };
 export function gripEnvelope(f, type, role, wpCap = Infinity) {
   const w = f.w;
   if (role === 'shelf') return { kind: 'shelf', Lp: clamp(1.3 * w, 18, 28), Wp: clamp(0.75 * w, 11, 16) };
@@ -130,7 +119,7 @@ function camDist(phone, s) { // distância da pegada à proteção da câmara (c
 }
 function edgeOk(phone, s) { for (const A of footprints(s)) for (const [x, y] of A) if (phoneSdf(phone, x, y, 2.4 - LOCK.EDGE_IN) > 0) return false; return true; }
 
-const NATURAL_GAP = { FULL_4_FINGER: 2.5, PINKY_SHELF: 3.2, CAMERA_CLAW: 2.5 };
+const NATURAL_GAP = { FULL_4_FINGER: 2.5, PINKY_SHELF: 3.2, CAMERA_CLAW: 2.5, SIDE_GRIP: 3.2 };
 export function sockets(hand, phone, style, types = ['sela', 'sela', 'sela', 'sela']) {
   const chi = hand.hand === 'LEFT' ? -1 : 1;
   const F = hand.fingers;
@@ -141,6 +130,7 @@ export function sockets(hand, phone, style, types = ['sela', 'sela', 'sela', 'se
   let spec;
   if (style === 'FULL_4_FINGER') spec = [['index', -5, chi * 12], ['middle', -7.5, chi * 8], ['ring', -5.5, chi * 5], ['pinky', -2.5, chi * 2]];
   else if (style === 'CAMERA_CLAW') { const k = phone.L / 163; spec = [['index', -11.5, chi * 24, yCeil - 3.5], ['middle', -9.5, chi * 16, -6.5 * k], ['ring', -7, chi * 10, -34 * k], ['pinky', -4.5, chi * 6, -58.5 * k]]; }
+  else if (style === 'SIDE_GRIP') spec = [['pinky', -12, 0, bottom + 13, 'shelf']];
   else spec = [['index', -5.5, chi * 14], ['middle', -8, chi * 9], ['ring', -6, chi * 5], ['pinky', -12, 0, bottom + 13, 'shelf']];
 
   const attempt = shrink => {
@@ -176,8 +166,8 @@ export function sockets(hand, phone, style, types = ['sela', 'sela', 'sela', 'se
       if (camDist(phone, s) < 1.0) issues.push({ kind: 'camara', finger: s.finger });
       out.slice(i + 1).forEach(o => { if (gripDistance(s, o) < LOCK.GAP_GRIP - 0.05) issues.push({ kind: 'colisao', a: s.finger, b: o.finger }); });
     });
-    const lowest = Math.min(...out.filter(s => s.role !== 'shelf').map(s => s.y));
-    if (lowest < bottom + 10) issues.push({ kind: 'nao_cabe' });
+    const dors = out.filter(s => s.role !== 'shelf');
+    if (dors.length && Math.min(...dors.map(s => s.y)) < bottom + 10) issues.push({ kind: 'nao_cabe' });
     return { out, issues };
   };
   let res = attempt(false);
@@ -185,6 +175,31 @@ export function sockets(hand, phone, style, types = ['sela', 'sela', 'sela', 'se
   const socks = res.out.map(s => ({ ...s, x: r2(s.x), y: r2(s.y), Wp: s.env.Wp }));
   socks.issues = res.issues;
   return socks;
+}
+
+/* ---------- 5c. Vincos laterais (estilo "Pela lateral") ----------
+ * Os dedos (indicador, médio, anelar) envolvem a aresta oposta ao polegar. Em vista traseira, com a mão direita,
+ * essa aresta é a de x > 0 (é o lado esquerdo visto de frente). Cada vinco tem a largura do dedo + 2 mm,
+ * profundidade 0,8 mm, e nunca passa por cima de um corte (botão, porta) com menos de 2,5 mm de folga.
+ */
+export const GROOVE = { DEPTH: 0.8, EXTRA: 0.8, PAD: 2.5, GAP: 1.5 };
+export function sideGrooves(hand, phone, on = true) {
+  if (!on) return null;
+  const side = hand.hand === 'LEFT' ? -1 : 1;                 // sinal de x da aresta dos dedos (vista traseira)
+  const sideName = side > 0 ? 'right' : 'left';
+  const cuts = cutsOf(phone).filter(n => n.side === sideName);
+  const fs = ['index', 'middle', 'ring'].map(f => ({ finger: f, w: hand.fingers[f].w + 2.0 }));
+  const span = fs.reduce((a, f) => a + f.w, 0) + GROOVE.GAP * (fs.length - 1);
+  const yTop0 = -0.06 * phone.L + span / 2;                    // o médio fica ligeiramente abaixo do centro
+  const yMin = -phone.L / 2 + phone.r + 6, yMax = phone.L / 2 - phone.r - 6;
+  const place = yTop => { const out = []; let y = yTop; fs.forEach(f => { out.push({ ...f, y: r2(y - f.w / 2) }); y -= f.w + GROOVE.GAP; }); return out; };
+  const clash = g => cuts.some(n => Math.abs(g.y - n.c) < g.w / 2 + n.w / 2 + GROOVE.PAD) || g.y + g.w / 2 > yMax || g.y - g.w / 2 < yMin;
+  let best = null;
+  for (let d = 0; d <= 60 && !best; d += 0.5) for (const sgn of [-1, 1]) {   // procura a posição livre mais perto da natural
+    const set = place(yTop0 + sgn * d); if (!set.some(clash)) { best = set; break; }
+  }
+  const grooves = best || place(yTop0).filter(g => !clash(g));
+  return { side, sideName, grooves, dropped: best ? [] : fs.filter(f => !grooves.some(g => g.finger === f.finger)).map(f => f.finger) };
 }
 
 /* ---------- 6. Modelo de impacto (sólidos celulares, Gibson & Ashby) ----------

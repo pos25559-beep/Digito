@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import JSZip from 'jszip';
 import * as E from '../lib/engine.js';
+import * as D from '../lib/devices.js';
 import * as G from '../lib/geometry.js';
 import * as HM from '../lib/handmeasure.js';
 import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib/viewer.js';
@@ -17,7 +18,7 @@ const TYPE_PT = { sela: 'Sela', blank: 'Tampa cega' };
 const TYPE_ICON = { sela: 'swipe', blank: 'hexagon' };
 const STEPS = ['Telemóvel', 'Mão', 'Pega', 'Medir', 'Afinar'];
 const KEY = 'digito.cfg.v1';
-const DEF = { needs: [], phoneId: 'IPHONE_16_PRO_MAX', hand: 'RIGHT', sex: 'X', height: 172, style: 'PINKY_SHELF', measured: null, overrides: {}, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', dropH: 1.2, step: 0, maxStep: 0 };
+const DEF = { needs: [], phoneId: 'IPHONE_17_PRO_MAX', caseColor: 'grafite', gripColor: 'azul', finish: 'liso', hand: 'RIGHT', sex: 'X', height: 172, style: 'PINKY_SHELF', measured: null, overrides: {}, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', dropH: 1.2, step: 0, maxStep: 0 };
 const NEEDS = [['tremor', 'A mão treme', 'vibration'], ['dor', 'Os dedos doem', 'swipe'], ['forca', 'Falta força', 'back_hand']];
 /** recomendação a partir das situações: estilo de pega e tipo de pega por dedo (indicador, médio, anelar, mindinho) */
 function preset(needs) {
@@ -47,7 +48,7 @@ function FitWarning({ issues, S, set }) {
     </div>
   );
 }
-const loadCfg = () => { try { const c = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; if (!E.GRIP_MATERIALS.includes(c.gripMat)) c.gripMat = DEF.gripMat; c.types = (Array.isArray(c.types) && c.types.length === 4 ? c.types : DEF.types).map(t => (t in TYPE_PT ? t : 'sela')); return c; } catch { return DEF; } };
+const loadCfg = () => { try { const c = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; if (!E.GRIP_MATERIALS.includes(c.gripMat)) c.gripMat = DEF.gripMat; if (!E.PHONES[c.phoneId]) c.phoneId = DEF.phoneId; if (!D.CASE_COLORS[c.caseColor]) c.caseColor = DEF.caseColor; if (!D.GRIP_COLORS[c.gripColor]) c.gripColor = DEF.gripColor; if (!D.FINISHES[c.finish]) c.finish = DEF.finish; if (!E.STYLES[c.style]) c.style = DEF.style; c.types = (Array.isArray(c.types) && c.types.length === 4 ? c.types : DEF.types).map(t => (t in TYPE_PT ? t : 'sela')); return c; } catch { return DEF; } };
 
 function handModel(S) {
   const base = S.measured ? JSON.parse(JSON.stringify(S.measured)) : E.estimateHand({ heightCm: S.height, sex: S.sex, hand: S.hand });
@@ -69,6 +70,7 @@ function StyleDiagram({ hand, phoneId, style }) {
       <rect x={cb.xmin * s} y={-cb.ymax * s} width={p.camW * s} height={p.camH * s} rx={p.camR * s} fill="#202124" />
       {socks.map(k => { const fw = k.w * s * 0.95; return <g key={k.finger} transform={`translate(${k.x * s + chi * 14} ${-k.y * s}) rotate(${-k.theta})`}><rect x={-23 - chi * 6} y={-fw / 2} width="46" height={fw} rx={fw / 2} fill="#F2C6A8" opacity=".95" /></g>; })}
       {socks.map(k => <circle key={'c' + k.finger} cx={k.x * s} cy={-k.y * s} r="3.6" fill="#1A73E8" stroke="#fff" strokeWidth="1.2" />)}
+      {style === 'SIDE_GRIP' && (E.sideGrooves(hand, p)?.grooves || []).map(g => { const sx = (hand.hand === 'LEFT' ? -1 : 1) * W / 2; return <g key={g.finger}><rect x={sx - (sx > 0 ? 0 : 14)} y={-g.y * s - g.w * s * 0.45} width="14" height={g.w * s * 0.9} rx={g.w * s * 0.45} fill="#F2C6A8" opacity=".95" /><line x1={sx} x2={sx} y1={-g.y * s - g.w * s / 2} y2={-g.y * s + g.w * s / 2} stroke="#1A73E8" strokeWidth="2.4" strokeLinecap="round" /></g>; })}
     </svg>
   );
 }
@@ -182,7 +184,8 @@ export default function Configure() {
   const hand = useMemo(() => handModel(S), [S]);
   const phone = E.PHONES[S.phoneId] || E.PHONES.IPHONE_16_PRO_MAX;
   const socks = useMemo(() => E.sockets(hand, phone, S.style, S.types), [hand, phone, S.style, S.types]);
-  const grips = socks.map((k, i) => ({ finger: k.finger, type: S.types[i], w: k.w, x: k.x, y: k.y, theta: k.theta, role: k.role }));
+  const groove = useMemo(() => E.sideGrooves(hand, phone, S.style === 'SIDE_GRIP'), [hand, phone, S.style]);
+  const grips = socks.map((k, i) => ({ finger: k.finger, type: S.types[i] || 'sela', w: k.w, x: k.x, y: k.y, theta: k.theta, role: k.role }));
   const price = designPrice(grips, S.gripMat);
   const [phys, setPhys] = useState(null);
 
@@ -229,17 +232,20 @@ export default function Configure() {
     const tm = setTimeout(() => {
       const st = V.current; if (!st) return;
       const pre = E.impact({ phone, h: S.dropH, gripMat: S.gripMat });
-      const b = G.build({ phone, socks, types: S.types, gripMat: S.gripMat, tSide: pre.tSide, tCorner: pre.tCorner });
+      const b = G.build({ phone, socks, types: socks.map((_, i) => S.types[i] || 'sela'), gripMat: S.gripMat, tSide: pre.tSide, tCorner: pre.tCorner, finish: S.finish, groove });
       built.current = b;
       setPhys(E.impact({ phone, h: S.dropH, gripMat: S.gripMat, caseVolCm3: b.caseVol / 1000, gripVolCm3: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, cornerVolMm3: b.cornerVol }));
       const { pieces, mats, v } = st;
       disposeGroup(pieces.case); disposeGroup(pieces.grips); disposeGroup(pieces.phone);
+      mats.case.color.set(D.CASE_COLORS[S.caseColor].hex); mats.case.sheenColor.set(D.CASE_COLORS[S.caseColor].hex);
       b.caseParts.forEach(g => pieces.case.add(meshOf(g, mats.case)));
-      const gm = gripMaterial(S.gripMat);
+      const insMat = new THREE.MeshStandardMaterial({ color: D.GRIP_COLORS[S.gripColor].hex, roughness: 0.45, metalness: 0.02 });
+      b.inserts.forEach(g => pieces.case.add(meshOf(g, insMat)));
+      const gm = gripMaterial(S.gripMat); gm.color.set(D.GRIP_COLORS[S.gripColor].hex);
       b.grips.forEach(gr => {
         const grp = new THREE.Group(); const mat = gm.clone(); grp.userData.mat = mat;
         gr.parts.forEach(g => grp.add(meshOf(g, mat)));
-        grp.position.set(gr.sock.x, gr.sock.y, G.consts.BACK + G.consts.BOSS_H); grp.userData.z0 = grp.position.z; grp.rotation.z = gr.sock.theta * Math.PI / 180;
+        grp.position.set(gr.sock.x, gr.sock.y, G.consts.GRIP_Z); grp.userData.z0 = grp.position.z; grp.rotation.z = gr.sock.theta * Math.PI / 180;
         pieces.grips.add(grp);
       });
       const ph = G.phoneGroup(phone, mats); ph.children.forEach(c => { c.castShadow = true; }); pieces.phone.add(...ph.children);
@@ -247,7 +253,7 @@ export default function Configure() {
       v.ground.position.y = -phone.L / 2 - 30; v.invalidate();
     }, 40);
     return () => clearTimeout(tm);
-  }, [socks, S.types, S.gripMat, S.dropH, phone]); // eslint-disable-line
+  }, [socks, S.types, S.gripMat, S.dropH, phone, S.finish, S.caseColor, S.gripColor, groove]); // eslint-disable-line
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.phone.visible = view.phone; st.target = { ex: view.explode ? 1 : 0, fr: view.front ? 1 : 0 }; st.v.invalidate(); }, [view]);
   useEffect(() => { const st = V.current; if (!st) return; st.pieces.grips.children.forEach((g, k) => g.userData.mat?.emissive?.set(k === hl ? '#0b3a8a' : '#000000')); st.v.invalidate(); }, [hl, phys]);
   // explodir brevemente ao entrar no passo final (mostra o encaixe)
@@ -264,14 +270,18 @@ export default function Configure() {
     `DÍGITO — ${name}`, `Telemóvel: ${phone.name}`, `Mão: ${S.hand === 'LEFT' ? 'esquerda' : 'direita'} · Pega: ${E.STYLES[S.style].name}`,
     `Medidas: ${S.measured ? 'foto calibrada com cartão ISO/IEC 7810 ID-1' : `estimativa por altura (${S.height} cm)`} · palma ${fmt(hand.palm)} mm`,
     ...grips.map((g, i) => `  ${i + 1}. ${E.FINGER_PT[g.finger].padEnd(9)} ${fmt(g.w)} mm · ${TYPE_PT[g.type]} · x ${fmt(g.x)} y ${fmt(g.y)} θ ${fmt(g.theta, 0)}°`),
-    `Pegas: ${E.MATERIALS[S.gripMat].name} (${E.MATERIALS[S.gripMat].proc}) · capa TPU 95A · queda de projeto ${fmt(S.dropH)} m`, `Preço: ${eur(price)}`
+    ...(groove ? [`Vincos laterais (${groove.side > 0 ? 'lado esquerdo visto de frente' : 'lado direito visto de frente'}): ${groove.grooves.map(g => `${E.FINGER_PT[g.finger]} y ${fmt(g.y)} mm, ${fmt(g.w)} mm`).join(' · ') || 'nenhum'}${groove.dropped.length ? ` · sem vinco: ${groove.dropped.map(f => E.FINGER_PT[f]).join(', ')} (botões)` : ''}`] : []),
+    `Aspeto: modelo ${D.FINISHES[S.finish].name} · capa ${D.CASE_COLORS[S.caseColor].name} · pegas e encaixes ${D.GRIP_COLORS[S.gripColor].name}`,
+    `Pegas: ${E.MATERIALS[S.gripMat].name} (${E.MATERIALS[S.gripMat].proc}) · capa TPU 95A · encaixes DÍGITO Lock v3 em PETG · queda de projeto ${fmt(S.dropH)} m`,
+    `Cotas do telemóvel: ${D.SRC_PT[phone.src]}`, `Preço: ${eur(price)}`
   ].join('\n');
   const downloadSTL = async () => {
     const b = built.current; if (!b) return;
     const zip = new JSZip(), slug = phone.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     zip.file(`capa_${slug}_TPU95A.stl`, G.toSTL(b.caseParts));
+    zip.file(`encaixes_lock-v3_${slug}_PETG.stl`, G.toSTL(b.inserts));
     b.grips.forEach((g, i) => zip.file(`pega_${i + 1}_${g.sock.finger}_${S.types[i]}.stl`, G.toSTL(g.parts, new THREE.Matrix4().makeTranslation(0, 0, G.consts.PLUG_H))));
-    zip.file('LEIA-ME.txt', summary() + '\n\nImpressão sugerida\nCapa: TPU 95A, camada 0,2 mm, 3 perímetros, placa traseira para baixo, sem suportes.\nPegas: camada 0,12 mm, de lado; 100 % de enchimento no macho.\nUnidades: mm.\n');
+    zip.file('LEIA-ME.txt', summary() + '\n\nImpressão sugerida (impressora de dois bicos)\nCapa (TPU 95A) e encaixes (PETG) na mesma placa: face do telemóvel para baixo, camada 0,2 mm, 3 perímetros, sem suportes. Os dois ficheiros já estão alinhados.\nPegas (PETG): macho para baixo, camada 0,12 mm, 100 % de enchimento no macho.\nUnidades: mm.\n');
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `digito_${slug}.zip`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     toast('Ficheiros STL descarregados.');
@@ -279,7 +289,7 @@ export default function Configure() {
   const saveAndCart = async () => {
     if (!user) { toast('Entra na tua conta para guardar o design.'); nav('/entrar?voltar=/configurar'); return; }
     setSaving(true);
-    const { data, error } = await supabase.from('designs').insert({ user_id: user.id, name: name.trim().slice(0, 60) || 'A minha DÍGITO', phone_model: S.phoneId, grip_style: S.style, hand, grips, grip_material: S.gripMat, drop_height: S.dropH, price_cents: price }).select().single();
+    const { data, error } = await supabase.from('designs').insert({ user_id: user.id, name: name.trim().slice(0, 60) || 'A minha DÍGITO', phone_model: S.phoneId, grip_style: S.style, hand, grips, grip_material: S.gripMat, drop_height: S.dropH, price_cents: price, options: { caseColor: S.caseColor, gripColor: S.gripColor, finish: S.finish, lock: 'v3', grooves: groove ? groove.grooves : null } }).select().single();
     setSaving(false);
     if (error) { toast('Não foi possível guardar o design. Tenta outra vez.'); return; }
     cart.add({ design_id: data.id, title: `Kit à medida — ${data.name}`, price_cents: price, image: null, phone: phone.name });
@@ -313,11 +323,24 @@ export default function Configure() {
           <div className="st-anim" key={S.step} style={{ display: 'grid', gap: 24 }}>
             {S.step === 0 && <>
               <div className="st-head"><span className="eyebrow">Passo 1 de 5</span><h2>Que telemóvel tens?</h2><p>A capa é desenhada à volta das medidas exatas do teu modelo.</p></div>
-              <div className="pick">{Object.entries(E.PHONES).map(([id, p]) => (
-                <button key={id} className="pk" aria-pressed={S.phoneId === id} onClick={() => set({ phoneId: id })}>
-                  <span className="art">{PHONE_ART(p)}</span><b>{p.name}</b><small className="mono">{fmt(p.L)} × {fmt(p.W)} mm</small>
-                </button>))}</div>
-              <p className="note">Os cortes dos botões e da porta USB-C são aproximados. Confirma-os no teu telemóvel antes de imprimir.</p>
+              {['Apple', 'Samsung', 'Google'].map(brand => (
+                <div key={brand} className="field"><span className="lbl">{brand}</span>
+                  <div className="pick">{Object.entries(E.PHONES).filter(([id, p]) => p.brand === brand && (!p.legacy || id === S.phoneId)).map(([id, p]) => (
+                    <button key={id} className="pk" aria-pressed={S.phoneId === id} onClick={() => set({ phoneId: id })}>
+                      <span className="art">{PHONE_ART(p)}</span><b>{p.name}</b><small className="mono">{fmt(p.L)} × {fmt(p.W)} mm</small>
+                      <span className={`srcpill ${p.src === 'desenho' ? 'photo' : ''}`}>{p.src === 'desenho' ? 'desenho oficial' : p.src === 'derivado' ? 'do desenho oficial' : 'estimado'}</span>
+                    </button>))}</div>
+                </div>))}
+              <div className="phone-src"><Icon n={phone.src === 'estimado' ? 'info' : 'verified'} size={20} /><div>
+                <p><b>{phone.name}: {phone.src === 'desenho' ? 'cotas oficiais' : phone.src === 'derivado' ? `cotas oficiais do ${phone.from}` : 'posições estimadas'}</b> · {D.SRC_PT[phone.src]}</p>
+                <p className="hint">{D.cutsOf(phone).length} cortes na capa: {phone.features.filter(f => f.kind !== 'sim').map(f => D.KIND_PT[f.kind].toLowerCase()).filter((v, i, a) => a.indexOf(v) === i).join(', ')}.</p>
+              </div></div>
+              <details className="more tablets"><summary><Icon n="tablet" size={20} />Tablets <span className="tagsoon">em breve</span></summary>
+                <p className="hint">Num tablet, o peso é maior e segura-se com mais força: as pegas fazem ainda mais diferença. Estamos a preparar capas para:</p>
+                <ul className="tablet-list">{D.TABLETS.map(t => <li key={t.name}><b>{t.name}</b><span>{t.brand}</span></li>)}</ul>
+                <Link className="key key-line key-sm" to="/#em-breve">Avisa-me / sugere um modelo</Link>
+              </details>
+              <p className="note">Não encontras o teu telemóvel? <Link to="/#em-breve">Diz-nos qual é</Link>: acrescentamos os modelos mais pedidos.</p>
             </>}
 
             {S.step === 1 && <>
@@ -373,9 +396,27 @@ export default function Configure() {
                     </div>
                   </div>); })}
               </div>
-              <p className="hint more-soon"><Icon n="new_releases" size={18} />Por agora há selas e tampas cegas. Estamos a desenhar mais pegas, outras capas e cores. <Link to="/#em-breve">Sugere um modelo</Link></p>
+              {groove && <div className="groove-card"><Icon n="swipe_vertical" /><div>
+                <b>Vincos na lateral</b>
+                <p className="hint" style={{ margin: 0 }}>{groove.grooves.length} vincos à medida ({groove.grooves.map(g => `${E.FINGER_PT[g.finger].toLowerCase()} ${fmt(g.w - 2, 1)} mm`).join(', ')}), 0,8 mm de fundo, no lado {groove.side > 0 ? 'esquerdo' : 'direito'} visto de frente. A parede engrossa 0,8 mm nessa zona para manter a proteção.</p>
+                {groove.dropped.length > 0 && <p className="hint warnline" style={{ margin: 0 }}><Icon n="info" size={16} />O {groove.dropped.map(f => E.FINGER_PT[f].toLowerCase()).join(' e o ')} fica sobre os botões deste telemóvel, por isso não leva vinco: os botões continuam livres.</p>}
+              </div></div>}
+              <div className="field"><span className="lbl">Modelo da capa</span>
+                <div className="finishes" role="radiogroup" aria-label="Modelo da capa">{Object.entries(D.FINISHES).map(([k, f]) => (
+                  <button key={k} type="button" role="radio" aria-checked={S.finish === k} className="finish" onClick={() => set({ finish: k })}>
+                    <span className={`fin-sw fin-${k}`} style={{ '--c': D.CASE_COLORS[S.caseColor].hex }} aria-hidden="true" /><b>{f.name}</b><small>{f.desc}</small>
+                  </button>))}</div>
+              </div>
+              <div className="field"><span className="lbl">Cor da capa <span className="hint">· TPU 95A</span></span>
+                <div className="swatches" role="radiogroup" aria-label="Cor da capa">{Object.entries(D.CASE_COLORS).map(([k, c]) => <button key={k} type="button" role="radio" aria-checked={S.caseColor === k} className="sw" style={{ '--c': c.hex }} onClick={() => set({ caseColor: k })}><span aria-hidden="true" />{c.name}</button>)}</div>
+              </div>
+              <div className="field"><span className="lbl">Cor das pegas e dos encaixes <span className="hint">· PETG</span></span>
+                <div className="swatches" role="radiogroup" aria-label="Cor das pegas">{Object.entries(D.GRIP_COLORS).map(([k, c]) => <button key={k} type="button" role="radio" aria-checked={S.gripColor === k} className="sw" style={{ '--c': c.hex }} onClick={() => set({ gripColor: k })}><span aria-hidden="true" />{c.name}</button>)}</div>
+                {(() => { const cr = D.contrast(D.CASE_COLORS[S.caseColor].hex, D.GRIP_COLORS[S.gripColor].hex); return <p className={`hint contrast ${cr >= 3 ? 'ok' : ''}`} style={{ margin: 0 }}><Icon n={cr >= 3 ? 'visibility' : 'visibility_off'} size={16} />{cr >= 3 ? `Bom contraste (${cr.toFixed(1)}:1): as pegas encontram-se à primeira, mesmo com pouca visão.` : `Contraste baixo (${cr.toFixed(1)}:1). Se vês mal, escolhe pegas mais claras ou mais escuras do que a capa.`}</p>; })()}
+              </div>
+              <p className="hint more-soon"><Icon n="new_releases" size={18} />Por agora há selas, apoio do mindinho e tampas cegas. Estamos a desenhar mais pegas. <Link to="/#em-breve">Sugere um modelo</Link></p>
               <div className="field"><span className="lbl">Materiais</span>
-                <p className="hint" style={{ margin: 0 }}>Capa em TPU 95A flexível e pegas em {mt.name} rígido, ambos impressos em FDM. Folga do encaixe {fmt(mt.c, 2)} mm.</p>
+                <p className="hint" style={{ margin: 0 }}>Capa em TPU 95A flexível, encaixes DÍGITO Lock v3 em PETG impressos com a capa, rentes às costas, e pegas em {mt.name} rígido. Tudo em FDM.</p>
               </div>
               <div className="field">
                 <div className="row" style={{ justifyContent: 'space-between' }}><label htmlFor="dh">Altura de queda de projeto</label><span className="mono" style={{ color: 'var(--ink)' }}>{fmt(S.dropH)} m</span></div>

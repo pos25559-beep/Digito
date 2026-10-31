@@ -8,7 +8,7 @@ import { makeViewer, makeMats, gripMaterial, meshOf, disposeGroup } from '../lib
 import { fmt, eur } from '../lib/pricing.js';
 import { HIGHLIGHTS } from '../lib/why.js';
 import { Icon, Range, useReveal, reducedMotion, AutoVideo, Photo, StepVideo } from '../components/ui.jsx';
-import { LOCK_VIDEO } from '../lib/motion.js';
+import LockAnim from '../components/LockAnim.jsx';
 import { PHOTOS } from '../lib/photos.js';
 import Roadmap from '../components/Roadmap.jsx';
 
@@ -24,14 +24,14 @@ function Lab() {
     return () => v.dispose();
   }, []);
   useEffect(() => {
-    const { v, model, mats, gm } = view.current; const phone = E.PHONES.IPHONE_16_PRO;
+    const { v, model, mats, gm } = view.current; const phone = E.PHONES.IPHONE_17_PRO;
     const base = E.estimateHand({ heightCm: 172 }); const k = w / base.fingers.middle.w;
     E.FINGERS.forEach(f => { base.fingers[f] = E.fingerRecord(base.fingers[f].w * k, base.fingers[f].d * k); });
     const socks = E.sockets(base, phone, style, ['sela', 'sela', 'sela', 'sela']); const imp = E.impact({ phone, h: 1.2 });
     const b = G.build({ phone, socks, types: ['sela', 'sela', 'sela', 'sela'], gripMat: 'FDM_PETG_CF', tSide: imp.tSide, tCorner: imp.tCorner });
     disposeGroup(model);
-    b.caseParts.forEach(g => model.add(meshOf(g, mats.case)));
-    b.grips.forEach(gr => { const grp = new THREE.Group(); gr.parts.forEach(g => grp.add(meshOf(g, gm))); grp.position.set(gr.sock.x, gr.sock.y, G.consts.BACK + G.consts.BOSS_H); grp.rotation.z = gr.sock.theta * Math.PI / 180; model.add(grp); });
+    b.caseParts.forEach(g => model.add(meshOf(g, mats.case))); b.inserts.forEach(g => model.add(meshOf(g, gm)));
+    b.grips.forEach(gr => { const grp = new THREE.Group(); gr.parts.forEach(g => grp.add(meshOf(g, gm))); grp.position.set(gr.sock.x, gr.sock.y, G.consts.GRIP_Z); grp.rotation.z = gr.sock.theta * Math.PI / 180; model.add(grp); });
     model.add(...G.phoneGroup(phone, mats).children);
     model.rotation.set(-Math.PI / 2, 0, 0); v.ground.position.y = -10;
     setD({ rs: base.fingers.middle.rs, vol: b.grips.reduce((s, g) => s + g.vol, 0) / 1000, gap: Math.abs(socks[0].y - socks[1].y) });
@@ -65,7 +65,7 @@ function Lab() {
 const MATS = [
   { name: 'TPU 95A', proc: 'FDM · capa', dot: 'radial-gradient(circle at 35% 30%, #5a5c61, #1b1c1f 70%)', E: '9–26 MPa', rho: '1,22 g/cm³', c: '0,25 mm', note: 'Elástico. Absorve a queda nos cantos.' },
   { name: 'PETG-CF', proc: 'FDM · pegas', dot: 'repeating-linear-gradient(45deg,#2b2d31 0 2px,#3a3d42 2px 4px)', E: '3,8 GPa', rho: '1,29 g/cm³', c: '0,20 mm', note: 'Rígido e mate, com fibra de carbono.' },
-  { name: 'PETG', proc: 'FDM · insert do encaixe', dot: 'radial-gradient(circle at 35% 30%, #8ab4f8, #1a73e8 70%)', E: '2,1 GPa', rho: '1,27 g/cm³', c: '0,20 mm', note: 'Rígido. Leva as patilhas da pega no DÍGITO Lock (em validação).' },
+  { name: 'PETG', proc: 'FDM · insert do encaixe', dot: 'radial-gradient(circle at 35% 30%, #8ab4f8, #1a73e8 70%)', E: '2,1 GPa', rho: '1,27 g/cm³', c: '0,20 mm', note: 'Rígido. Insert do DÍGITO Lock v3, impresso com a capa (em validação).' },
 ];
 const COLORS = ['c-red', 'c-blue', 'c-violet', 'c-green'];
 const NEEDS = [
@@ -164,17 +164,17 @@ export default function Home() {
 
       <section className="wrap tech-sec" id="encaixe">
         <div className="lock-band">
-          <div className="reveal"><StepVideo {...LOCK_VIDEO} /></div>
+          <div className="reveal"><LockAnim /></div>
           <div className="lock-copy reveal">
-            <span className="why-kicker">Tecnologia · DÍGITO Lock</span>
+            <span className="why-kicker">Tecnologia · DÍGITO Lock v3</span>
             <h2>Uma pega que não cai do nada</h2>
-            <p>Para quem apoia o peso do telemóvel nas pegas, o encaixe não pode falhar. A nova baioneta prende cada pega com três patilhas: empurras, rodas 60° e ouves o clique. Puxar não a solta, e não tem peças móveis.</p>
+            <p>Para quem apoia o peso do telemóvel nas pegas, o encaixe não pode falhar. Encaixas, rodas 60° e ouves o clique: três trincos prendem as patilhas e nem empurrar nem puxar as solta. O encaixe fica rente às costas, por isso sem pegas a capa é lisa.</p>
             <div className="lock-facts">
               <div><b>190 N</b><span>para arrancar a pega (cálculo), contra ~6 N dos ímanes</span></div>
-              <div><b>2×</b><span>margem no caso de projeto</span></div>
-              <div><b>0</b><span>peças móveis</span></div>
+              <div><b>3,2 mm</b><span>rente às costas da capa</span></div>
+              <div><b>0,9 N·m</b><span>para rodar sem a chave</span></div>
             </div>
-            <p className="hint"><Icon n="science" size={16} /> Em validação: os protótipos estão a ser ensaiados.</p>
+            <p className="hint"><Icon n="science" size={16} /> Em validação: geometria verificada em 3D, provetes a imprimir.</p>
             <Link className="key key-dark key-lg" to="/tecnologia">Ver como funciona <Icon n="arrow_forward" size={20} /></Link>
           </div>
         </div>

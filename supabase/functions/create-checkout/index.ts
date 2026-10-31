@@ -10,6 +10,20 @@ const cors = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
 type Item = { listing_id?: string; design_id?: string; quantity?: number };
+// opções do design que seguem para a produção (só valores conhecidos; o resto é ignorado)
+const CASE_COLORS = ["grafite", "ardosia", "areia", "salvia", "marinho", "terracota"];
+const GRIP_COLORS = ["preto", "branco", "azul", "laranja", "amarelo", "menta"];
+const FINISHES = ["liso", "canelado", "favo", "pontos"];
+function cleanOptions(o: Record<string, unknown> | null) {
+  const x = o || {};
+  return {
+    caseColor: CASE_COLORS.includes(String(x.caseColor)) ? x.caseColor : "grafite",
+    gripColor: GRIP_COLORS.includes(String(x.gripColor)) ? x.gripColor : "preto",
+    finish: FINISHES.includes(String(x.finish)) ? x.finish : "liso",
+    lock: x.lock === "v3" ? "v3" : "v1",
+    grooves: Array.isArray(x.grooves) ? (x.grooves as unknown[]).slice(0, 4) : null,
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -54,7 +68,7 @@ Deno.serve(async (req) => {
       if (!GRIP_MATERIALS.includes(d.grip_material)) return json({ error: "material_unavailable", id: it.design_id }, 409);
       if ((d.grips || []).some((g: { type: string }) => !GRIP_TYPES.includes(g.type))) return json({ error: "grip_unavailable", id: it.design_id }, 409);
       const unit = designPrice(d.grips || [], d.grip_material);
-      lines.push({ title: `Kit DÍGITO à medida — ${d.name}`, unit, qty, design_id: d.id, seller_id: null, config: { phone: d.phone_model, style: d.grip_style, grips: d.grips, material: d.grip_material, hand: d.hand } });
+      lines.push({ title: `Kit DÍGITO à medida — ${d.name}`, unit, qty, design_id: d.id, seller_id: null, config: { phone: d.phone_model, style: d.grip_style, grips: d.grips, material: d.grip_material, hand: d.hand, options: cleanOptions(d.options) } });
     }
   }
   const subtotal = lines.reduce((s, l) => s + l.unit * l.qty, 0);
